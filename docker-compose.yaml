@@ -1,36 +1,35 @@
-
 services:
   sku-analytics-monitor:
-    build: .
+    build:
+      context: ./server1
+      dockerfile: Dockerfile # Verifique se o nome é exatamente este
     ports:
       - "8501:8501"
     volumes:
-      # O pulo do gato: conecta o socket do Docker do seu host ao container
       - /var/run/docker.sock:/var/run/docker.sock
-      # Mapeia seu código local para ver mudanças em tempo real (dev mode)
-      - .:/app
+      - ./server1:/app
     environment:
       - PYTHONUNBUFFERED=1
-
 
   logistica-sku-analytics:
     container_name: logistica-sku-analytics
     build:
-      context: .
-      dockerfile: app.Dockerfile
+      context: ./server2
+      dockerfile: Dockerfile # Verifique se este arquivo está DENTRO da pasta server2
     ports:
       - "8502:8501"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - .:/app
+      - ./server2:/app
     environment:
       - PYTHONUNBUFFERED=1
 
-
   monitor-sentinel:
-    build: .
+    build:
+      context: ./server1
     container_name: monitor-sentinel
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./server1:/app
     command: ["python", "alert_worker.py"]
     restart: always
