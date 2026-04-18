@@ -1,0 +1,36 @@
+
+services:
+  sku-analytics-monitor:
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      # O pulo do gato: conecta o socket do Docker do seu host ao container
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Mapeia seu código local para ver mudanças em tempo real (dev mode)
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+
+
+  logistica-sku-analytics:
+    container_name: logistica-sku-analytics
+    build:
+      context: .
+      dockerfile: app.Dockerfile
+    ports:
+      - "8502:8501"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+
+
+  monitor-sentinel:
+    build: .
+    container_name: monitor-sentinel
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: ["python", "alert_worker.py"]
+    restart: always

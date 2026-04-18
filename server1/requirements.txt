@@ -1,0 +1,6 @@
+mcp 
+streamlit 
+sentence-transformers 
+docker 
+numpy
+torchvision

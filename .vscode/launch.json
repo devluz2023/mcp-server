@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Streamlit (Server1)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "streamlit",
+            "python": "${workspaceFolder}/server1/venv/bin/python",
+            "args": [
+                "run",
+                "app.py",
+                "--server.port", "8501"
+            ],
+            "cwd": "${workspaceFolder}/server1",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "justMyCode": true
+        }
+    ]
+}
