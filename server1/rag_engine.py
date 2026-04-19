@@ -1,14 +1,18 @@
-from sentence_transformers import SentenceTransformer
-import numpy as np
+from langchain_chroma import Chroma
+from langchain_community.embeddings import SentenceTransformerEmbeddings
 
-model = SentenceTransformer('all-MiniLM-L6-v2')
+# 1. Carrega o modelo de embedding (o mesmo que você usava)
+embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
 
-# Simulação de base de conhecimento sobre problemas de SKU Analytics
+# 2. Inicializa o Chroma (ele cria a pasta 'chroma_db' automaticamente para persistir os dados)
+db = Chroma(persist_directory="./chroma_db", embedding_function=embedding_function)
+
+# 3. Adiciona sua base de conhecimento (só precisa rodar uma vez!)
 kb = ["Erro de conexão Databricks: Verifique o cluster.", "OOM: Aumente o memory da task."]
-embeddings_kb = model.encode(kb)
+# O Chroma gerencia os vetores internamente, não precisamos mais do np.dot
+db.add_texts(kb)
 
 def analisar_log(log_texto: str):
-    log_emb = model.encode([log_texto])
-    # Similaridade simples
-    scores = np.dot(embeddings_kb, log_emb.T)
-    return kb[np.argmax(scores)]
+    # O Chroma busca o documento mais parecido semanticamente
+    results = db.similarity_search(log_texto, k=1)
+    return results[0].page_content

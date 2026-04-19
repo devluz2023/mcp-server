@@ -4,10 +4,24 @@ import docker
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from rag_engine import analisar_log
+from langchain_ollama import ChatOllama
+# Tente esta importação alternativa
+
+from sentence_transformers import SentenceTransformer, util
+from langchain.tools import tool
+from langchain.agents import create_agent
+
+llm = ChatOllama(model="llama3", base_url="http://localhost:11434")
+bert_model = SentenceTransformer('bert-base-multilingual-cased')
+# llm = ChatOllama(model="deepseek-r1:8b", base_url="http://ollama:11434")
+llm = ChatOllama(model="deepseek-r1:8b", base_url="http://localhost:11434")
 
 st.set_page_config(page_title="SKU Analytics Control", layout="wide")
 
 st.title("Central de Comando: SKU Analytics")
+
+
+
 
 # --- MONITORAMENTO AUTOMÁTICO ---
 @st.fragment(run_every="30s")
@@ -62,10 +76,15 @@ if st.button("Analisar Pipeline"):
         except Exception as e:
             st.error(f"Erro: {e}")
 
+
+
 if st.button("Executar Testes Unitários"):
     with st.spinner("Rodando testes..."):
         try:
-            result = asyncio.run(run_tests_async("./servico_alvo"))
+            # Captura o resultado da chamada assíncrona
+            result = asyncio.run(run_tests_async(container_input))
             st.code(result.content[0].text, language="bash")
         except Exception as e:
-            st.error(f"Falha na execução dos testes: {e}")
+            # Isso vai revelar o erro real escondido pelo TaskGroup
+            import traceback
+            st.error(f"Erro completo: {traceback.format_exc()}")

@@ -11,6 +11,21 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
 
+  # neo4j:
+  #   image: neo4j:5.15.0-community
+  #   container_name: neo4j-sku-analytics
+  #   ports:
+  #     - "7474:7474" # Interface HTTP (Navegador)
+  #     - "7687:7687" # Protocolo Bolt (Para conectar o Python)
+  #   volumes:
+  #     - ./neo4j/data:/data
+  #     - ./neo4j/logs:/logs
+  #     - ./neo4j/conf:/conf
+  #   environment:
+  #     # Defina uma senha forte!
+  #     - NEO4J_AUTH=neo4j/sua_senha_segura
+  #   restart: always
+
   logistica-sku-analytics:
     container_name: logistica-sku-analytics
     build:
@@ -23,6 +38,8 @@ services:
       - ./server2:/app
     environment:
       - PYTHONUNBUFFERED=1
+    networks:
+      - sku-network
 
   monitor-sentinel:
     build:
@@ -33,3 +50,22 @@ services:
       - ./server1:/app
     command: ["python", "alert_worker.py"]
     restart: always
+  
+
+  ollama:
+    image: ollama/ollama
+    container_name: ollama-brain
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - sku-network
+
+
+networks:
+  sku-network:
+    driver: bridge
+
+volumes:
+  ollama_data:

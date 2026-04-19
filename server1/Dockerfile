@@ -10,7 +10,8 @@ WORKDIR /app
 
 # Instale as dependências Python
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir --default-timeout=1000 -r requirements.txt
 
 # Copie o restante do código
 COPY . .

@@ -6,7 +6,7 @@
             "type": "debugpy",
             "request": "launch",
             "module": "streamlit",
-            "python": "${workspaceFolder}/server1/venv/bin/python",
+            "python": "${workspaceFolder}/venv/bin/python",
             "args": [
                 "run",
                 "app.py",
