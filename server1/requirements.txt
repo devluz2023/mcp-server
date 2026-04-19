@@ -11,3 +11,4 @@ numpy
 torchvision
 pytest
 torch
+angchain-core
