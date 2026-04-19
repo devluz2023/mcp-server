@@ -16,3 +16,15 @@ def analisar_log(log_texto: str):
     # O Chroma busca o documento mais parecido semanticamente
     results = db.similarity_search(log_texto, k=1)
     return results[0].page_content
+
+
+
+def salvar_contexto(texto, resposta):
+    db.add_texts([f"Log: {texto} | Resposta: {resposta}"])
+
+
+def buscar_contexto(log_texto):
+    resultados = db.similarity_search_with_score(log_texto, k=1)
+    if resultados and resultados[0][1] < 0.2:
+        return resultados[0].page_content.split(" | Resposta: ")[-1]
+    return None
