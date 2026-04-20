@@ -10,6 +10,8 @@ services:
       - ./server1:/app
     environment:
       - PYTHONUNBUFFERED=1
+    networks:
+      - sku-network
 
   # neo4j:
   #   image: neo4j:5.15.0-community
@@ -55,6 +57,7 @@ services:
   ollama:
     image: ollama/ollama
     container_name: ollama-brain
+    network_mode: host
     ports:
       - "11434:11434"
     volumes:

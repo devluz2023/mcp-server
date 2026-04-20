@@ -1,11 +1,15 @@
+import logging
 from sentence_transformers import SentenceTransformer, util
 import torch
-from rag_engine import buscar_contexto, salvar_contexto # Apenas lógica, sem libs de DB
-# Carregue o modelo apenas uma vez, fora da função, para não recarregar toda hora
+from rag_engine import buscar_contexto, salvar_contexto
+
+# Configuração do logger
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
 bert_model = SentenceTransformer('bert-base-multilingual-cased')
 
 def classificar_urgencia(log_texto):
-    # Frases de referência para erros graves
     criticos = [
         "CRITICAL error", 
         "FATAL failure in system", 
@@ -13,53 +17,52 @@ def classificar_urgencia(log_texto):
         "Database connection timeout"
     ]
     
-    # Gera os embeddings (vetores)
+    logger.info("Calculando urgência para o log fornecido.")
+    
     log_embedding = bert_model.encode(log_texto, convert_to_tensor=True)
     criticos_embeddings = bert_model.encode(criticos, convert_to_tensor=True)
     
-    # Calcula a similaridade de cosseno
-    # Retorna uma lista de scores (0 a 1)
     scores = util.cos_sim(log_embedding, criticos_embeddings)
-    
-    # Pega o maior score (o erro que mais se parece com um erro crítico)
     max_score = torch.max(scores).item()
     
-    # Define um limite (threshold)
-    return "ALTA" if max_score > 0.6 else "NORMAL"
-
-
+    urgencia = "ALTA" if max_score > 0.6 else "NORMAL"
+    
+    # Logando o score para fins de ajuste (tuning) do threshold
+    logger.info(f"Urgência classificada como {urgencia} (Max Score: {max_score:.4f})")
+    
+    return urgencia
 
 def classificar_resultado_teste(output_teste):
-    """
-    Classifica se o teste passou ou falhou baseado no output.
-    """
     referencias = ["test passed", "successfully completed", "assertion error", "test failed"]
+    
+    logger.info("Analisando output de teste...")
     
     output_embedding = bert_model.encode(output_teste, convert_to_tensor=True)
     ref_embeddings = bert_model.encode(referencias, convert_to_tensor=True)
     
     scores = util.cos_sim(output_embedding, ref_embeddings)
-    
-    # 0: test passed, 1: successfully, 2: assertion error, 3: test failed
     max_score_idx = torch.argmax(scores).item()
     
-    if max_score_idx in [0, 1]:
-        return "PASSOU"
-    else:
-        return "FALHOU"
+    resultado = "PASSOU" if max_score_idx in [0, 1] else "FALHOU"
     
-
-
-def processar_ou_recuperar(log_texto, funcao_processamento):
-    # Tenta recuperar do RAG
-    contexto = buscar_contexto(log_texto)
-    if contexto:
-        return contexto
-    
-    # Se não existe, processa
-    resultado = funcao_processamento(log_texto)
-    
-    # Salva no RAG
-    salvar_contexto(log_texto, resultado)
+    logger.info(f"Resultado do teste: {resultado} (Referência detectada: '{referencias[max_score_idx]}')")
     
     return resultado
+
+def processar_ou_recuperar(log_texto, funcao_processamento):
+    logger.info("Consultando RAG por contexto existente...")
+    
+    contexto = buscar_contexto(log_texto)
+    if contexto:
+        logger.info("Contexto encontrado no RAG. Retornando valor em cache.")
+        return contexto
+    
+    logger.info("Contexto não encontrado. Executando processamento...")
+    try:
+        resultado = funcao_processamento(log_texto)
+        salvar_contexto(log_texto, resultado)
+        logger.info("Processamento concluído e salvo no RAG.")
+        return resultado
+    except Exception as e:
+        logger.error(f"Erro ao processar/salvar contexto: {str(e)}")
+        raise e
