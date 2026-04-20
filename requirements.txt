@@ -11,3 +11,12 @@ numpy
 torchvision
 pytest
 torch
+matplotlib 
+scipy 
+seaborn
+pandas>=1.3.0
+ortools>=9.0.0
+pytest>=6.0.0
+pyomo
+matplotlib
+folium

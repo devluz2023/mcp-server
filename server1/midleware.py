@@ -52,3 +52,13 @@ async def run_tests_async(service_path):
     except Exception as e:
         logger.error(f"Falha ao executar testes unitários: {str(e)}", exc_info=True)
         raise e
+    
+
+# Adicione isso ao final do midleware.py
+def sync_fetch_log(container_name):
+    """Ponte síncrona para a função async."""
+    return asyncio.run(fetch_log_and_diagnose(container_name))
+
+def sync_run_tests(service_path):
+    """Ponte síncrona para a função async."""
+    return asyncio.run(run_tests_async(service_path))

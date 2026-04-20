@@ -1,61 +1,69 @@
 import logging
+import os
 from langchain_chroma import Chroma
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 
-# Configuração do logger
+# Configuração de Logs
 logger = logging.getLogger("RAGEngine")
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-# 1. Carrega o modelo de embedding
-logger.info("Carregando modelo de embeddings...")
-embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+# --- CARREGAMENTO ÚNICO (Singleton Pattern) ---
+# Isso evita o recarregamento do modelo a cada requisição
+class RAGManager:
+    _instance = None
 
-# 2. Inicializa o Chroma
-logger.info("Conectando ao banco vetorial ChromaDB...")
-db = Chroma(persist_directory="./chroma_db", embedding_function=embedding_function)
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(RAGManager, cls).__new__(cls)
+            logger.info("Inicializando RAG Manager e modelo de Embeddings...")
+            # Caminho otimizado para cache
+            cls._instance.embeddings = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+            cls._instance.db = Chroma(
+                persist_directory="./chroma_db", 
+                embedding_function=cls._instance.embeddings
+            )
+            # Inicializa a KB se necessário
+            cls._instance._init_kb()
+        return cls._instance
 
-# 3. Adiciona sua base de conhecimento
-def inicializar_db():
-    logger.info("Verificando/Adicionando base de conhecimento inicial...")
-    kb = ["Erro de conexão Databricks: Verifique o cluster.", "OOM: Aumente o memory da task."]
-    db.add_texts(kb)
-    logger.info("Base de conhecimento carregada.")
+    def _init_kb(self):
+        # Verifica se já existem documentos para evitar duplicidade
+        # (Opcional: você pode checar se a KB está vazia antes de adicionar)
+        kb = ["Erro de conexão Databricks: Verifique o cluster.", "OOM: Aumente o memory da task."]
+        self.db.add_texts(kb)
+        logger.info("Base de conhecimento inicial carregada.")
+
+# Instância única para uso global
+rag = RAGManager()
+
+# --- FUNÇÕES DE INTERFACE ---
 
 def analisar_log(log_texto: str):
-    logger.info("Executando busca por similaridade para o log...")
-    results = db.similarity_search(log_texto, k=1)
+    """Analisa logs e retorna uma resposta baseada na similaridade."""
+    logger.info("Executando busca por similaridade...")
+    results = rag.db.similarity_search(log_texto, k=1)
     
     if results:
-        logger.info(f"Log analisado. Contexto encontrado: {results[0].page_content[:50]}...")
         return results[0].page_content
-    
-    logger.warning("Nenhum contexto encontrado para o log.")
-    return None
+    return "Status: NORMAL (Nenhum padrão crítico detectado)"
 
 def salvar_contexto(texto, resposta):
-    logger.info("Persistindo novo contexto no banco de vetores...")
+    """Persiste novos logs e diagnósticos no ChromaDB."""
     try:
-        db.add_texts([f"Log: {texto} | Resposta: {resposta}"])
-        logger.info("Contexto salvo com sucesso.")
+        rag.db.add_texts([f"Log: {texto} | Resposta: {resposta}"])
+        logger.info("Contexto salvo no ChromaDB.")
     except Exception as e:
-        logger.error(f"Erro ao salvar contexto no Chroma: {str(e)}")
+        logger.error(f"Erro ao salvar no banco: {str(e)}")
 
 def buscar_contexto(log_texto):
-    logger.info("Consultando RAG por contexto prévio...")
-    resultados = db.similarity_search_with_score(log_texto, k=1)
+    """Busca contexto prévio para evitar reprocessamento."""
+    resultados = rag.db.similarity_search_with_score(log_texto, k=1)
     
     if resultados:
         doc, score = resultados[0]
-        # O Chroma usa distância Euclidiana ao quadrado ou cosseno, 
-        # verifique a métrica configurada no seu Chroma. 
-        # Abaixo assumimos que score baixo é melhor (distância).
-        logger.info(f"Resultado encontrado com score: {score:.4f}")
-        
+        # Score menor que 0.2 indica alta similaridade
         if score < 0.2:
-            resposta = doc.page_content.split(" | Resposta: ")[-1]
-            logger.info("Contexto relevante validado pelo threshold.")
-            return resposta
-        else:
-            logger.info("Score acima do threshold. Ignorando contexto.")
-            
+            logger.info(f"Cache RAG encontrado (Score: {score:.4f})")
+            return doc.page_content.split(" | Resposta: ")[-1]
+    
     return None

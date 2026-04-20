@@ -40,8 +40,8 @@ services:
       - ./server2:/app
     environment:
       - PYTHONUNBUFFERED=1
-    networks:
-      - sku-network
+    # networks:
+    #   - sku-network
 
   monitor-sentinel:
     build:
@@ -62,8 +62,8 @@ services:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
-    networks:
-      - sku-network
+    # networks:
+    #   - sku-network
 
 
 networks:
