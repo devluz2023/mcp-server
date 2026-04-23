@@ -24,6 +24,7 @@ terraform {
 
 provider "azurerm" {
   features {}
-  # Como você já deu o 'az account set', ele usará a assinatura 558cda1e...
-  subscription_id = "558cda1e-9cc5-47b8-ac22-5f3dcc47d1d7"
+  # A subscription ID pode ser definida via variável de ambiente ARM_SUBSCRIPTION_ID
+  # ou via variável terraform (ver variables.tf)
+  subscription_id = var.subscription_id
 }

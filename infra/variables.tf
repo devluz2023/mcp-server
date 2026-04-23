@@ -2,6 +2,12 @@ variable "resource_group_name" {
   type = string
 }
 
+variable "subscription_id" {
+  type        = string
+  description = "Azure Subscription ID"
+  default     = ""  # Defina via variável de ambiente ARM_SUBSCRIPTION_ID ou no arquivo .tfvars
+}
+
 variable "location" {
   type = string
 }
