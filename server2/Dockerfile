@@ -11,4 +11,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Comando para rodar o arquivo exatamente onde ele está na estrutura
-CMD ["python", "src/main.py"]
+CMD ["python", "app.py"]

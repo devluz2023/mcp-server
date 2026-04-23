@@ -1,0 +1,252 @@
+Soft AutoML: Hyperparameter Tuning
+Hard AutoML: Architecture search and learned optimizer
+Phase 1. Before machine learning
+If this is your first time trying to make this type of prediction
+from this type of data, start with non-ML solutions. Your first
+stab at the problem can be the simplest heuristics. For example,
+to predict what letter users are going to type next in English,
+you can show the top three most common English letters, “e”,
+“t”, and “a”, which is correct 30% of the time.
+Phase 2. Simplest machine learning models
+For your first ML model, you want to start with a simple
+algorithm, something that gives you visibility into its working
+to allow you to validate the usefulness of your problem
+framing and your data. Logistic regression XGBoost, K-nearest
+neighbors can be great for that.
+They are also easier to implement and deploy which allows
+you to quickly build out a framework from data management
+to development to deployment that you can test and trust.
+Phase 3. Optimizing simple models
+Once you’ve had your ML framework in place, you can focus
+on optimizing the simple ML models with different objective
+functions, hyperparameter search, feature engineering, more
+data, and ensembles.
+This phase will allow you to answer questions such as how
+quickly your model decays in production and update your
+infrastructure accordingly.
+Phase 4. Complex systems
+Once you’ve reached the limit of your simple models and your
+use case demands significant model improvement, experiment
+with more complex models.
+
+Model Calibration
+
+Confidence Measurement
+
+Batch Prediction vs. Online Prediction
+
+oitmiacao de modelo
+vectorization
+parallezation
+llop tilling
+operactaion fusion
+graph optimization
+
+
+
+
+
+
+Causes of ML System Failures
+
+Dependency failure
+Deployment failure
+Hardware failures:
+Downtime or crashing
+
+Production Data Differing From Training Data
+Concept Drift
+Handling Data Distribution Shifts
+\Detecting Data Distribution Shifts
+
+
+
+
+Requirements for ML Systems
+Reliability
+Scalability
+Maintainability
+Adaptability
+
+
+Choose a metric to optimize. For example, you might want to
+optimize for impressions -- the number of times an ad is shown.
+2. Collect data and obtain labels.
+3. Engineer features.
+4. Train models.
+5. During error analysis, you realize that errors are caused by wrong
+labels, so you relabel data.
+6. Train model again.
+7. During error analysis, you realize that your model always predicts
+that an ad shouldn’t be shown, and the reason is because 99.99% of
+the data you have is no-show (an ad shouldn’t be shown for most
+queries). So you have to collect more data of ads that should be
+shown.
+8. Train model again.
+9. Model performs well on your existing test data, which is by now
+two months ago. But it performs poorly on the test data from
+yesterday. Your model has degraded, so you need to collect more
+recent data.
+10. Train model again.
+11. Deploy model.
+12. Model seems to be performing well but then the business people
+come knocking on your door asking why the revenue is decreasing.
+It turns out the ads are being shown but few people click on them.
+So you want to chan
+
+
+process of developing an ML system looks more like a c
+
+Step 1. Project scoping
+Step 2. Data engineering
+Step 3. ML model development
+Step 4. Deployment
+Step 5. Monitoring and continual learning
+Step 6. Business analysis
+
+
+
+
+
+arquietura de agetnes
+design de agents
+agents
+
+arquietra de ml
+ml
+
+arqwuietura de rn
+design de redes rn
+redes neruais
+
+aquetita de llm
+llm
+
+
+
+Detail how the agent handles user queries.
+
+
+
+
+# Otimizacao
+Choose a metric to optimize. For example, you might want to
+optimize for impressions -- the number of times an ad is shown.
+2. Collect data and obtain labels.
+3. Engineer features.
+4. Train models.
+5. During error analysis, you realize that errors are caused by wrong
+labels, so you relabel data.
+6. Train model again.
+7. During error analysis, you realize that your model always predicts
+that an ad shouldn’t be shown, and the reason is because 99.99% of
+the data you have is no-show (an ad shouldn’t be shown for most
+queries). So you have to collect more data of ads that should be
+shown.
+8. Train model again.
+9. Model performs well on your existing test data, which is by now
+two months ago. But it performs poorly on the test data from
+yesterday. Your model has degraded, so you need to collect more
+recent data.
+10. Train model again.
+11. Deploy model.
+12. Model seems to be performing well but then the business people
+come knocking on your door asking why the revenue is decreasing.
+It turns out the ads are being shown but few people click on them.
+So you want to chan
+
+
+# process of developing an ML system looks more like a c
+Step 1. Project scoping
+Step 2. Data engineering
+Step 3. ML model development
+Step 4. Deployment
+Step 5. Monitoring and continual learning
+Step 6. Business analysis
+
+
+
+qual o pr
+
+
+## PADROES
+- ISO/IEC 42001 Infomation technology - Artificial intelligence - Management system.
+- ISO/IEC FDIS 42005 Information technology — Artificial intelligence — AI system impact
+assessment
+- ISO/IEC 22989 Information technology — Artificial intelligence — Artificial intelligence concepts and terminology.
+- ISO/IEC 23053 Framework for Artificial Intelligence (AI) Systems Using Machine Learning (ML).
+- ISO/IEC 23894 Information technology — Artificial intelligence — Guidance on risk management.
+- ISO/IEC CD 4213 Artificial intelligence — Performance measurement for AI classification, regression, clustering and recommendation tasks.
+- ISO/IEC TR 24029-1 Artificial Intelligence (AI) — Assessment of the robustness of neural networks.
+- ISO/IEC DIS 42102 Information technology — Artificial intelligence — Framework for characterizing AI system methods and capabilities.
+- iso/iec 5259 Artificial intelligence — Data quality for analytics and machine learning (ML).
+- iso/iec 12792/2025Information technology — Artificial intelligence (AI) — Transparency taxonomy of AI systems.
+- ISO/IEC TR 24028 nformation technology — Artificial intelligence — Overview of trustworthiness in artificial
+intelligence iTeh STANDARD PREVIE.
+- ISO/IEC TR 24027 Artificial intelligence (AI) — Bias in AI systems and AI aided decision making.
+- ISO/IEC 5338:2023 Information technology — Artificial intelligence — AI system life cycle processes.
+- ISO/IEC 8183 Information technology — Artificial intelligence — Data life cycle framework.
+- ISO/IEC 23053 Framework for Artificial Intelligence (AI) Systems Using Machine Learning (ML)
+-  MATUIDADE:
+- LEVEL 0 - SEM MLOPS:
+-- Destque:
+--- O ciclo de vida completo do modelo de machine learning é difícil de gerenciar.
+--- As equipes são desconectadas e os lançamentos são desafiadores.
+--- A maioria dos sistemas não são transparentes, com pouco feedback durante e após a implantação.
+-- Tecnologia:
+--- Compilações e implantações são manuais.
+--- O modelo e o teste de aplicativo são manuais.
+--- O controle de desempenho do modelo não é centralizado.
+--- O treinamento de modelo é manual.
+--- as equipes usam apenas os recursos básicos do workspace da plataforma.
+- LEVEL 1 - DEVOPS MAS SEM MLOPS.
+-- Destque:
+--- As versões são menos desafiadoras que o Nível 0, mas dependem de equipes de dados para cada novo modelo.
+--- Os comentários sobre o desempenho do modelo na produção ainda são limitados.
+--- Os resultados são difíceis de rastrear e reproduzir.
+-- Tecnologia:
+--- Os builds são automatizados.
+--- O código do aplicativo tem testes automatizados.
+--- O código é controlado por versão.
+- LEVEL 2 - TREINAMENTO AUTOMATIZADO.
+-- Destque:
+--- O ambiente de treinamento é totalmente gerenciado e rastreável.
+--- O modelo é fácil de reproduzir.
+--- Os lançamentos são manuais, mas fáceis de implementar.
+-- Tecnologia:
+--- O treinamento de modelo é automatizado
+--- O acompanhamento de desempenho de treinamento de modelo é centralizado.
+--- O gerenciamento de modelos está em vigor.
+--- Trabalhos agendados ou controlados por eventos de Aprendizado de Máquina lidam com treinamento recorrente.
+--- É adotado um repositório de funcionalidades gerenciado.
+--- Os eventos do ciclo de vida do Azure Event Grid são emitidos para a orquestração de pipelines.
+--- Os ambientes são gerenciados usando definições de ambiente do Machine Learning.
+- LEVEL 3 - IMPLANTACAO DE MODELO AUTOMATIZADA.
+-- Destque:
+--- As versões são fáceis de implementar e automáticas.
+--- A rastreabilidade completa existe desde a implantação até os dados originais.
+--- Todo o ambiente é gerenciado, incluindo treinamento, teste e produção.
+-- Tecnologia:
+--- O teste A/B do desempenho do modelo é integrado para implantação.
+
+--- O teste A/B do desempenho do modelo é integrado para implantação.
+
+---O acompanhamento de desempenho de treinamento de modelo é centralizado.
+--- Artefatos são promovidos entre workspaces usando registros de aprendizado de máquina.
+
+- LEVEL 4 - OPERACOES AUTOMATIZADAS COMPLETAS DO MLOPS.
+-- Destque:
+--- O sistema completo é automatizado e facilmente monitorado.
+
+--- Os sistemas de produção fornecem informações sobre como melhorar e, às vezes, melhoram automaticamente com novos modelos.
+--- O sistema está se aproximando de zero tempo de inatividade.
+-- Tecnologia:
+--- O treinamento e o teste de modelo são automatizados.
+
+--- O modelo implantado emite métricas detalhadas e centralizadas.
+
+--- Sinais de descompasso ou regressão acionam o retreinamento automático usando o Event Grid.
+
+--- Sinais de descompasso ou regressão acionam o retreinamento automático usando o Event Grid.
+--- A promoção de modelo é baseada em políticas e automatizada usando registros do Machine Learning.
+

@@ -1,6 +1,7 @@
 {
     "version": "0.2.0",
     "configurations": [
+        
         {
             "name": "Debug Streamlit (Server1)",
             "type": "debugpy",
@@ -10,13 +11,29 @@
             "args": [
                 "run",
                 "app.py",
-                "--server.port", "8501"
+                "--server.port",
+                "8501"
             ],
             "cwd": "${workspaceFolder}/server1",
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
             "justMyCode": true
+        },
+        {
+            "name": "Debug Docker (logistica-sku-analytics)",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "127.0.0.1",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/server2",
+                    "remoteRoot": "/app"
+                }
+            ]
         }
     ]
 }

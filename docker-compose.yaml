@@ -35,13 +35,16 @@ services:
       dockerfile: Dockerfile # Verifique se este arquivo está DENTRO da pasta server2
     ports:
       - "8502:8501"
+      - "5678:5678"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./server2:/app
     environment:
       - PYTHONUNBUFFERED=1
-    # networks:
-    #   - sku-network
+      - DEBUG=1
+      - DEBUGPY_PORT=5678
+    networks:
+      - sku-network
 
   monitor-sentinel:
     build:
@@ -57,13 +60,13 @@ services:
   ollama:
     image: ollama/ollama
     container_name: ollama-brain
-    network_mode: host
+    # network_mode: host
     ports:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
-    # networks:
-    #   - sku-network
+    networks:
+      - sku-network
 
 
 networks:

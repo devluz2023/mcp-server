@@ -2,7 +2,7 @@
 
 
 import pandas as pd
-
+from ortools.linear_solver import pywraplp
 dados = pd.read_csv('../data/visibilidade.csv')
 dados
 
@@ -13,7 +13,7 @@ slots_tempo_disponiveis
 dados_visibilidade = dados.to_dict()
 dados_visibilidade
 
-from ortools.linear_solver import pywraplp
+
 
 modelo = pywraplp.Solver.CreateSolver('SCIP')
 
@@ -545,6 +545,27 @@ def alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis):
         y[slot] = modelo.NewIntVar(lb = 0, ub = num_anunciantes, name = f'y[{anunciante}]')
 
     modelo.Maximize(sum(dados_visibilidade[anunciante][slot]*x[anunciante, slot] for anunciante in dados_visibilidade for slot in slots_tempo_disponiveis))
+
+    for slot in slots_tempo_disponiveis:
+        variaveis_slot = [x[anunciante, slot] for anunciante in dados_visibilidade]
+        modelo.AddExactlyOne(variaveis_slot)
+
+        for anunciante in dados_visibilidade:
+            modelo.Add(y[slot] == marcas.index(anunciante)).OnlyEnforceIf(x[anunciante, slot])
+
+    for slot in range(0, len(slots_tempo_disponiveis)-2):
+        anunciantes = [y[slot], y[slot+1], y[slot+2]]
+        modelo.AddAllDifferent(anunciantes)
+
+    solver = cp_model.CpSolver()
+    status = solver.Solve(modelo)
+    print(status, descricao_status(status))
+    if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]:
+        grade = []
+        valor_obj = solver.ObjectiveValue()
+        for slot in slots_tempo_disponiveis:
+            idx = solver.Value(y[slot])
+            print(slot, idx, marcas[idx])
 
     for slot in slots_tempo_disponiveis:
         variaveis_slot = [x[anunciante, slot] for anunciante in dados_visibilidade]

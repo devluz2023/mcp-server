@@ -21,3 +21,4 @@ torchvision
 pytest
 torch
 langchain-core
+debugpy

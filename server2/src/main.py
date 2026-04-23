@@ -1,12 +1,13 @@
+import debugpy
 import time
 
-def main():
-    print("Iniciando serviço de SKU Analytics...")
-    # Aqui entraria a lógica principal do seu pipeline
-    while True:
-        print("Serviço rodando... monitorando SKU")
-        # Simula o trabalho
-        time.sleep(60) # Pausa por 60 segundos antes de rodar de novo
+print("--- Iniciando teste ---")
+# Força o bind no IP correto
+debugpy.listen(("0.0.0.0", 5678))
+print("--- Aguardando VS Code ---")
+debugpy.wait_for_client()
+print("--- Conectado! ---")
 
-if __name__ == "__main__":
-    main()
+while True:
+    print("Processo vivo...")
+    time.sleep(10)
