@@ -1,1 +1,0 @@
-RUN pip install tensorflow xgboost catboost scikit-learn

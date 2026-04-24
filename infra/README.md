@@ -49,3 +49,7 @@ Este diretório contém a infraestrutura como código (IaC) do projeto, utilizan
 ---
 
 Dúvidas? Consulte a documentação oficial do Terraform ou o responsável pelo projeto.
+
+
+export ARM_SUBSCRIPTION_ID="558cda1e-9cc5-47b8-ac22-5f3dcc47d1d7"
+terraform apply -var-file=poc.tfvars
