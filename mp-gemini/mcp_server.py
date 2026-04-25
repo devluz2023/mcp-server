@@ -43,6 +43,15 @@ def deploy_modelo_databricks(nome_modelo: str) -> str:
     return db.deploy_modelo(nome_modelo)
 
 
+
+
+@mcp.tool()
+def bundle_job_yaml() -> str:
+    """Cria bundle yaml"""
+    return db.bundle_job_yaml
+
+
+
 @mcp.tool()
 def pipeline_databricks(nome_arquivo: str, tabela: str, feature_table: str) -> str:
     """

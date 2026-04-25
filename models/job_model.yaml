@@ -1,0 +1,21 @@
+bundle:
+  name: mcp-server
+
+resources:
+  jobs:
+    feature_store_job:
+      name: "feature-store-job"
+
+      tasks:
+        - task_key: feature_store_task
+
+          existing_cluster_id: "0425-143644-dir071r6"
+
+          spark_python_task:
+            python_file: /Users/fabio.jdluz@gmail.com/models/modelo_fs.py
+
+      schedule:
+        quartz_cron_expression: "0 0 * * *"
+        timezone_id: "America/Sao_Paulo"
+
+      max_concurrent_runs: 1

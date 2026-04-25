@@ -50,12 +50,18 @@ def criar_dashboard_databricks() -> str:
     """Cria dashboard no Databricks"""
     return db.criar_dashboard_padrao()
 
+
+@tool
+def bundle_job_yaml() -> str:
+    """Cria bundle yaml"""
+    return db.bundle_job_yaml()
+
 @tool
 def pipeline_databricks() -> str:
     """
     Pipeline completo: CSV → Delta → Feature Store
     """
-    return db.executar_pipeline_fixo()
+    return db.executar_pipeline_csv_para_feature_store()
 
 @tool
 def deploy_modelo_databricks(nome_modelo: str) -> str:
@@ -86,7 +92,8 @@ tools = {
     "criar_dashboard_databricks": criar_dashboard_databricks,
     "deploy_modelo_databricks": deploy_modelo_databricks,
     "listar_modelos": listar_modelos,
-    "pipeline_databricks":pipeline_databricks
+    "pipeline_databricks":pipeline_databricks,
+    "bundle_job_yaml": bundle_job_yaml
 }
 
 # =========================

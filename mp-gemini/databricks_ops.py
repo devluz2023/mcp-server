@@ -13,7 +13,7 @@ from databricks.connect import DatabricksSession
 import requests
 import os
 import json
-
+import yaml
 # =========================
 # WORKSPACE CLIENT (REST API)
 # =========================
@@ -258,3 +258,71 @@ def deploy_modelo(nome_arquivo: str):
 
     except Exception as e:
         return f"Erro no deploy: {str(e)}"
+
+
+
+def bundle_job_yaml():
+
+    """
+    Lê YAML fixo e cria Job no Databricks usando SDK tipado corretamente.
+    """
+
+    import os
+    import yaml
+    from dotenv import load_dotenv
+    from databricks.sdk import WorkspaceClient
+    from databricks.sdk.service.jobs import Task, SparkPythonTask
+
+    load_dotenv()
+
+    w = WorkspaceClient(
+        host=os.getenv("DATABRICKS_HOST"),
+        token=os.getenv("DATABRICKS_TOKEN")
+    )
+
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+
+        yaml_path = os.path.join(
+            base_dir,
+            "..",
+            "models",
+            "job_model.yaml"
+        )
+
+        if not os.path.exists(yaml_path):
+            return f"❌ YAML não encontrado: {yaml_path}"
+
+        with open(yaml_path, "r") as f:
+            config = yaml.safe_load(f)
+
+        job_cfg = list(config["resources"]["jobs"].values())[0]
+        task_cfg = job_cfg["tasks"][0]
+
+        # =========================
+        # SDK TIPADO (CORRETO)
+        # =========================
+        task = Task(
+            task_key=task_cfg["task_key"],
+            existing_cluster_id=task_cfg["existing_cluster_id"],
+            spark_python_task=SparkPythonTask(
+                python_file=task_cfg["spark_python_task"]["python_file"]
+            )
+        )
+
+        response = w.jobs.create(
+            name=job_cfg["name"],
+            tasks=[task]
+        )
+
+        return {
+            "status": "success",
+            "job_id": response.job_id,
+            "job_name": job_cfg["name"]
+        }
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
