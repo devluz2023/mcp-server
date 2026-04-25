@@ -14,7 +14,7 @@
                 "--server.port",
                 "8501"
             ],
-            "cwd": "${workspaceFolder}/server1",
+            "cwd": "${workspaceFolder}/mp-gemini",
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },

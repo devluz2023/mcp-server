@@ -8,72 +8,85 @@ from langchain_core.messages import HumanMessage
 
 import databricks_ops as db
 
+# =========================
 # CONFIG
+# =========================
 load_dotenv()
 
 st.set_page_config(page_title="Databricks Assistant", page_icon="🤖")
 st.title("🤖 Assistente Databricks")
 
 # =========================
-# TOOLS
+# TOOLS (WRAPPERS)
 # =========================
+
 @tool
 def listar_jobs_databricks() -> str:
-    """
-    Use esta função APENAS quando o usuário pedir para ver/listar jobs disponíveis.
-    NÃO use para executar jobs.
-    """
+    """Lista jobs no Databricks"""
     return db.listar_jobs()
-
 
 @tool
 def executar_job_databricks(job_id: int) -> str:
-    """
-    Use esta função quando o usuário pedir explicitamente para executar um job.
-    Exemplo: 'execute o job 123'
-    """
+    """Executa job no Databricks"""
     return db.executar_job(job_id)
-
-
-@tool
-def verificar_custo_job(run_id: int) -> str:
-    """Consulta o custo de uma execução específica"""
-    return db.calcular_custo(run_id)
-
 
 @tool
 def criar_job_databricks(nome: str) -> str:
-    """
-    Use quando o usuário quiser criar um novo job.
-    Exemplo: 'crie um job chamado teste'
-    """
+    """Cria job no Databricks"""
     return db.criar_job(nome)
-
 
 @tool
 def atualizar_job_databricks(job_id: int, novo_nome: str) -> str:
-    """
-    Use quando o usuário quiser atualizar um job existente.
-    Exemplo: 'atualize o job 123 para novo_nome'
-    """
+    """Atualiza job no Databricks"""
     return db.atualizar_job(job_id, novo_nome)
-
 
 @tool
 def deletar_job_databricks(job_id: int) -> str:
-    """
-    Use quando o usuário quiser deletar um job.
-    Exemplo: 'delete o job 123'
-    """
+    """Deleta job no Databricks"""
     return db.deletar_job(job_id)
 
+@tool
+def criar_dashboard_databricks() -> str:
+    """Cria dashboard no Databricks"""
+    return db.criar_dashboard_padrao()
+
+@tool
+def pipeline_databricks() -> str:
+    """
+    Pipeline completo: CSV → Delta → Feature Store
+    """
+    return db.executar_pipeline_fixo()
+
+@tool
+def deploy_modelo_databricks(nome_modelo: str) -> str:
+    """Faz deploy de modelo Python"""
+    return db.deploy_modelo(nome_modelo)
+
+@tool
+def listar_modelos() -> str:
+    """Lista modelos locais"""
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    models_dir = os.path.join(base_dir, "..", "models")
+
+    return "\n".join([
+        f for f in os.listdir(models_dir)
+        if f.endswith(".py")
+    ])
+
+
+# =========================
+# TOOL REGISTRY (IMPORTANTE)
+# =========================
 tools = {
     "listar_jobs_databricks": listar_jobs_databricks,
     "executar_job_databricks": executar_job_databricks,
-    "verificar_custo_job": verificar_custo_job,
     "criar_job_databricks": criar_job_databricks,
     "atualizar_job_databricks": atualizar_job_databricks,
-    "deletar_job_databricks": deletar_job_databricks
+    "deletar_job_databricks": deletar_job_databricks,
+    "criar_dashboard_databricks": criar_dashboard_databricks,
+    "deploy_modelo_databricks": deploy_modelo_databricks,
+    "listar_modelos": listar_modelos,
+    "pipeline_databricks":pipeline_databricks
 }
 
 # =========================
@@ -88,15 +101,21 @@ llm = ChatOpenAI(
 llm_with_tools = llm.bind_tools(list(tools.values()))
 
 # =========================
-# UI
+# MEMORY
 # =========================
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# =========================
+# CHAT HISTORY
+# =========================
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
+# =========================
+# INPUT
+# =========================
 if prompt := st.chat_input("Pergunte algo..."):
 
     st.session_state.messages.append({"role": "user", "content": prompt})
@@ -105,30 +124,48 @@ if prompt := st.chat_input("Pergunte algo..."):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
+
         try:
             response = llm_with_tools.invoke([
                 HumanMessage(content=f"""
-            Você é um assistente de Databricks.
+Você é um assistente de Databricks.
 
-            Regras:
-            - Se o usuário pedir para executar um job, use executar_job_databricks.
-            - Se pedir para listar, use listar_jobs_databricks.
-            - NÃO confunda as funções.
+REGRAS:
+- Use tools corretamente.
+- NÃO invente funções.
+- Se precisar listar modelos use listar_modelos.
+- Se precisar deploy use deploy_modelo_databricks.
 
-            Pergunta:
-            {prompt}
-            """)
+
+
+Pergunta:
+{prompt}
+""")
             ])
 
-            # 🔥 TOOL CALL
+            # =========================
+            # TOOL EXECUTION SAFE LOOP FIX
+            # =========================
+            executed = set()
+
             if response.tool_calls:
+
                 for call in response.tool_calls:
                     name = call["name"]
-                    args = call["args"]
 
-                    result = tools[name].invoke(args)
+                    if name in executed:
+                        continue
 
-                    st.text(result)
+                    executed.add(name)
+
+                    args = call.get("args", {})
+
+                    if name in tools:
+                        result = tools[name].invoke(args)
+                    else:
+                        result = f"Tool não encontrada: {name}"
+
+                    st.markdown(result)
 
                     st.session_state.messages.append({
                         "role": "assistant",
@@ -137,6 +174,7 @@ if prompt := st.chat_input("Pergunte algo..."):
 
             else:
                 reply = response.content
+
                 st.markdown(reply)
 
                 st.session_state.messages.append({
@@ -146,3 +184,5 @@ if prompt := st.chat_input("Pergunte algo..."):
 
         except Exception as e:
             st.error(f"Erro: {str(e)}")
+
+
