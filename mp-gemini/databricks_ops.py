@@ -14,6 +14,7 @@ import requests
 import os
 import json
 import yaml
+import drift as drift
 # =========================
 # WORKSPACE CLIENT (REST API)
 # =========================
@@ -425,3 +426,7 @@ def executar_pipeline_csv_para_feature_store():
             "status": "error",
             "message": str(e)
         }
+
+def show_drift():
+
+    return drift.run_drift()

@@ -50,6 +50,11 @@ def criar_dashboard_databricks() -> str:
     """Cria dashboard no Databricks"""
     return db.criar_dashboard_padrao()
 
+@tool
+def show_drift() -> str:
+    """Mostra os drifts"""
+    return db.show_drift()
+
 
 @tool
 def bundle_job_yaml() -> str:
@@ -93,7 +98,8 @@ tools = {
     "deploy_modelo_databricks": deploy_modelo_databricks,
     "listar_modelos": listar_modelos,
     "pipeline_databricks":pipeline_databricks,
-    "bundle_job_yaml": bundle_job_yaml
+    "bundle_job_yaml": bundle_job_yaml,
+    "show_drift": show_drift
 }
 
 # =========================

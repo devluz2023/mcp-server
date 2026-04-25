@@ -59,6 +59,14 @@ def pipeline_databricks(nome_arquivo: str, tabela: str, feature_table: str) -> s
     """
     return db.pipeline_csv_para_feature_store(nome_arquivo, tabela, feature_table)
 
+
+@mcp.tool()
+def show_drift():
+    db.run_drift_single_table()
+
+
 if __name__ == "__main__":
     logger.info("Iniciando servidor MCP...")
     mcp.run()
+
+
