@@ -326,3 +326,102 @@ def bundle_job_yaml():
             "status": "error",
             "message": str(e)
         }
+
+
+import os
+import pandas as pd
+from pyspark.sql import functions as F
+
+def executar_pipeline_csv_para_feature_store():
+    """
+    Pipeline fixo:
+    CSV local → Spark DataFrame → Delta Table → Feature Store (ou fallback Delta)
+    """
+
+    try:
+        # =========================
+        # Spark session
+        # =========================
+        from databricks.connect import DatabricksSession
+        from databricks.feature_engineering import FeatureEngineeringClient
+
+        spark = DatabricksSession.builder.getOrCreate()
+
+        try:
+            fe = FeatureEngineeringClient()
+        except:
+            fe = None  # fallback se Feature Store não estiver disponível
+
+        # =========================
+        # CONFIG FIXA
+        # =========================
+        catalog = "pedido"
+        schema = "default"
+        table = "cliente"
+        feature_table = "cliente_features"
+
+        base_table = f"{catalog}.{schema}.{table}"
+        feature_table_name = f"{catalog}.{schema}.{feature_table}"
+
+        # =========================
+        # CSV FIXO
+        # =========================
+        csv_path = (
+            "/Users/fabiojuliodaluz/Documents/GitHub/mcp-server/"
+            "arquitetura_de_dados/data/BancoDeDados.csv"
+        )
+
+        if not os.path.exists(csv_path):
+            return f"CSV não encontrado: {csv_path}"
+
+        # =========================
+        # LOAD CSV
+        # =========================
+        df_pd = pd.read_csv(csv_path)
+        df = spark.createDataFrame(df_pd)
+
+        # =========================
+        # CRIA SCHEMA
+        # =========================
+        spark.sql(f"CREATE SCHEMA IF NOT EXISTS {catalog}.{schema}")
+
+        # =========================
+        # SALVA TABELA BASE
+        # =========================
+        df.write.format("delta").mode("overwrite").saveAsTable(base_table)
+
+        # =========================
+        # FEATURES
+        # =========================
+        df_features = df.groupBy("id_unico_cliente").agg(
+            F.count("*").alias("total_registros"),
+            F.avg("preco").alias("ticket_medio"),
+            F.sum("preco").alias("valor_total")
+        )
+
+        # =========================
+        # FEATURE STORE (ou fallback)
+        # =========================
+        if fe:
+            try:
+                fe.create_table(
+                    name=feature_table_name,
+                    primary_keys=["id_unico_cliente"],
+                    df=df_features
+                )
+            except:
+                df_features.write.format("delta").mode("overwrite").saveAsTable(feature_table_name)
+        else:
+            df_features.write.format("delta").mode("overwrite").saveAsTable(feature_table_name)
+
+        return {
+            "status": "success",
+            "base_table": base_table,
+            "feature_table": feature_table_name
+        }
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
