@@ -4,58 +4,70 @@ from databricks.feature_engineering import FeatureEngineeringClient
 from pyspark.sql import functions as F, SparkSession
 
 def get_spark_and_fe_client():
-    """Detecta o ambiente e retorna as sessões configuradas."""
+    """Detecta o ambiente e inicializa as sessões."""
+    if "DATABRICKS_RUNTIME_VERSION" in os.environ:
+        spark = SparkSession.builder.getOrCreate()
+    else:
+        spark = DatabricksSession.builder.getOrCreate()
+    
+    fe = FeatureEngineeringClient()
+    return spark, fe
+
+def main():
+    spark, fe = get_spark_and_fe_client()
+    target_table = "pedido.default.cliente_features"
+    pk_column = "id_unico_cliente"
+
     try:
-        # Tenta detectar se estamos no cluster (Runtime) ou local (Connect)
-        if "DATABRICKS_RUNTIME_VERSION" in os.environ:
-            spark = SparkSession.builder.getOrCreate()
-        else:
-            spark = DatabricksSession.builder.getOrCreate()
-        
-        fe = FeatureEngineeringClient()
-        return spark, fe
+        # 1. Processamento das Features
+        df_raw = spark.table("pedido.default.cliente")
+        df_features = df_raw.groupBy(pk_column).agg(
+            F.count("id_pedido").alias("total_pedidos"),
+            F.avg("preco").alias("ticket_medio"),
+            F.sum("preco").alias("valor_total_gasto")
+        )
+
+        # 2. Tentativa de Registro ou Atualização
+        try:
+            print(f"Tentando registrar: {target_table}")
+            fe.create_table(
+                name=target_table,
+                primary_keys=[pk_column],
+                df=df_features,
+                description="Agregados de Cliente - Feature Store"
+            )
+            print("Tabela registrada!")
+        except Exception:
+            print("A tabela já existe. Aplicando ajustes de estrutura e merge...")
+            
+            # Ajuste de schema: O Unity Catalog exige que a PK seja NOT NULL
+            spark.sql(f"ALTER TABLE {target_table} ALTER COLUMN {pk_column} SET NOT NULL")
+            
+            # Adiciona a Constraint de PK se ainda não existir
+            try:
+                spark.sql(f"""
+                    ALTER TABLE {target_table} 
+                    ADD CONSTRAINT {target_table.split('.')[-1]}_pk 
+                    PRIMARY KEY ({pk_column})
+                """)
+            except Exception:
+                pass # Constraint já existe, podemos prosseguir
+            
+            # Atualização dos dados
+            fe.write_table(
+                name=target_table,
+                df=df_features,
+                mode="merge"
+            )
+            print("Dados atualizados com sucesso via Merge!")
+
+        # 3. Governança
+        spark.sql(f"COMMENT ON TABLE {target_table} IS 'Feature Store: Agregados de Cliente'")
+        print("Processo finalizado!")
+
     except Exception as e:
-        print(f"Erro ao inicializar sessão: {e}")
-        raise
+        print(f"Erro crítico: {str(e)}")
+        raise e
 
-# 1. Inicializa o ambiente
-spark, fe = get_spark_and_fe_client()
-
-# 2. Configurações da Tabela
-target_table = "pedido.default.cliente_features"
-
-# 3. Processamento das Features
-# Aqui você pode mudar a estrutura (adicionar novas colunas/agregados) livremente
-df_raw = spark.table("pedido.default.cliente")
-
-df_features = df_raw.groupBy("id_unico_cliente").agg(
-    F.count("id_pedido").alias("total_pedidos"),
-    F.avg("preco").alias("ticket_medio"),
-    F.sum("preco").alias("valor_total_gasto") # Exemplo: nova coluna adicionada
-)
-
-# 4. Criação ou Atualização com Evolução de Esquema
-# Se a tabela não existe, cria. Se existe e a estrutura mudou, sobrescreve o esquema.
-try:
-    print(f"Tentando registrar a feature table: {target_table}")
-    fe.create_table(
-        name=target_table,
-        primary_keys=["id_unico_cliente"],
-        df=df_features
-    )
-    print("Tabela registrada com sucesso!")
-except Exception:
-    print("A tabela já existe. Atualizando estrutura e dados...")
-    # O uso do overwriteSchema permite que você mude as colunas do df_features 
-    # e a tabela no Unity Catalog seja atualizada automaticamente.
-    df_features.write \
-        .format("delta") \
-        .mode("overwrite") \
-        .option("overwriteSchema", "true") \
-        .saveAsTable(target_table)
-    print("Esquema e dados atualizados com sucesso!")
-
-# 5. Comentário de governança
-spark.sql(f"COMMENT ON TABLE {target_table} IS 'Feature Store: Agregados de Cliente - Atualizado em 2026'")
-
-print("Processo finalizado com sucesso!")
+if __name__ == "__main__":
+    main()

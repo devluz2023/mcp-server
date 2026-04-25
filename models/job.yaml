@@ -1,0 +1,21 @@
+resources:
+  jobs:
+    feature_store_job:
+      name: "Job_Feature_Store_Cliente"
+      tasks:
+        - task_key: "processar_features"
+          python_wheel_task:
+            package_name: "modelo_fs" # Nome do seu módulo se estiver empacotado
+          spark_python_task:
+            python_file: "models/modelo_fs.py" # Caminho do seu script
+          job_cluster_key: "job_cluster_fs"
+          libraries:
+            - pypi:
+                package: "databricks-feature-engineering"
+
+      job_clusters:
+        - job_cluster_key: "job_cluster_fs"
+          new_cluster:
+            spark_version: "15.4.x-scala2.12" # Recomendado usar versão ML
+            node_type_id: "i3.xlarge"
+            num_workers: 2
