@@ -196,134 +196,65 @@ def listar_modelos():
     ]
 
     return arquivos
+from databricks.sdk.service.workspace import ImportFormat
 
-
-def criar_job_modelo(nome_arquivo: str):
-    try:
-        cluster_id = os.getenv("DATABRICKS_CLUSTER_ID")
-
-        if not cluster_id:
-            return "Erro: DATABRICKS_CLUSTER_ID não configurado"
-
-        workspace_path = f"/Shared/models/{nome_arquivo}"
-
-        job = w.jobs.create(
-            name=f"Job - {nome_arquivo}",
-            tasks=[
-                Task(
-                    task_key="task_model",
-                    existing_cluster_id=cluster_id,
-                    spark_python_task=SparkPythonTask(
-                        python_file=workspace_path
-                    )
-                )
-            ]
-        )
-
-        return f"Job criado com sucesso! ID: {job.job_id}"
-
-    except Exception as e:
-        return f"Erro ao criar job: {str(e)}"
 
 def upload_modelo(nome_arquivo: str):
     try:
         base_dir = os.path.dirname(os.path.abspath(__file__))
         local_path = os.path.join(base_dir, "..", "models", nome_arquivo)
 
-        workspace_folder = "/Shared/models"
+        workspace_folder = "/Users/fabio.jdluz@gmail.com/models" # Criei uma pasta models dentro do seu usuário para organizar
         workspace_path = f"{workspace_folder}/{nome_arquivo}"
 
-        # ✅ 1. Criar pasta se não existir
-        try:
-            w.workspace.mkdirs(path=workspace_folder)
-        except Exception:
-            pass  # se já existir, ignora
+        # 1. Cria a pasta
+        w.workspace.mkdirs(path=workspace_folder)
 
-        # ✅ 2. Upload do arquivo
-        w.workspace.upload(
-            path=workspace_path,
-            content=open(local_path, "rb"),
-            overwrite=True
-        )
+        # 2. Upload com formato FORÇADO para SOURCE (Script Python)
+        with open(local_path, "rb") as f:
+            w.workspace.upload(
+                path=workspace_path,
+                content=f,
+                overwrite=True,
+                 format=ImportFormat.AUTO # Isso diz ao Databricks: "trate como código fonte"
+            )
 
         return workspace_path
 
     except Exception as e:
         return f"Erro ao subir modelo: {str(e)}"
-    
+
+    except Exception as e:
+        return f"Erro ao subir modelo: {str(e)}"
+
+def criar_job_modelo(nome_arquivo: str, workspace_path: str):
+    cluster_id = os.getenv("DATABRICKS_CLUSTER_ID")
+
+    # O Spark entende caminhos absolutos do Workspace corretamente aqui
+    job = w.jobs.create(
+        name=f"Job - {nome_arquivo}",
+        tasks=[
+            Task(
+                task_key="model",
+                existing_cluster_id=cluster_id,
+                spark_python_task=SparkPythonTask(
+                    python_file=workspace_path
+                )
+            )
+        ]
+    )
+    return job.job_id
 
 def deploy_modelo(nome_arquivo: str):
     try:
-        # 1. upload
         workspace_path = upload_modelo(nome_arquivo)
-
-        if "Erro" in workspace_path:
+        
+        if isinstance(workspace_path, str) and "Erro" in workspace_path:
             return workspace_path
 
-        # 2. criar job
-        result = criar_job_modelo(nome_arquivo)
+        job_id = criar_job_modelo(nome_arquivo, workspace_path)
 
-        return f"""
-        ✅ Modelo enviado: {workspace_path}
-        🚀 {result}
-        """
+        return f"✅ Modelo enviado para: {workspace_path}\n🚀 Job criado! ID: {job_id}"
 
     except Exception as e:
-        return str(e)
-    
-def executar_pipeline_fixo():
-
-    """
-    Lê CSV local e grava no Databricks como tabela Delta.
-    """
-
-    try:
-        # =========================
-        # Spark session
-        # =========================
-        spark = DatabricksSession.builder.getOrCreate()
-
-        # =========================
-        # Config fixo
-        # =========================
-        CATALOGO = "pedido"
-        SCHEMA = "default"
-        TABELA = "cliente"
-
-        FULL_TABLE_NAME = f"{CATALOGO}.{SCHEMA}.{TABELA}"
-
-        # =========================
-        # Criar schema
-        # =========================
-        spark.sql(f"CREATE SCHEMA IF NOT EXISTS {CATALOGO}.{SCHEMA}")
-
-        # =========================
-        # CSV fixo
-        # =========================
-        local_csv_path = (
-            "/Users/fabiojuliodaluz/Documents/GitHub/mcp-server/"
-            "arquitetura_de_dados/data/BancoDeDados.csv"
-        )
-
-        if not os.path.exists(local_csv_path):
-            return f"Arquivo não encontrado: {local_csv_path}"
-
-        # =========================
-        # Ler CSV
-        # =========================
-        df_pd = pd.read_csv(local_csv_path)
-        df_spark = spark.createDataFrame(df_pd)
-
-        # =========================
-        # Escrever Delta Table
-        # =========================
-        df_spark.write \
-            .format("delta") \
-            .mode("overwrite") \
-            .option("overwriteSchema", "true") \
-            .saveAsTable(FULL_TABLE_NAME)
-
-        return f"✔ Carga concluída com sucesso: {FULL_TABLE_NAME}"
-
-    except Exception as e:
-        return f"Erro na carga: {str(e)}"
+        return f"Erro no deploy: {str(e)}"
