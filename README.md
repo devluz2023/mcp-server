@@ -88,3 +88,12 @@ docker compose up --build
 - melhorar a execução de `server2/src/main.py` para rodar Streamlit corretamente em container.
 
 
+
+
+melhorar rag
+testes unitarios nos agentes
+arquietura limpa
+codigo limpo
+pool de llm
+gerenciamento de concorrencia
+gerenciamento de custo

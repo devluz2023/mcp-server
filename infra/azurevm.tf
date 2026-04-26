@@ -130,7 +130,7 @@ resource "azurerm_linux_virtual_machine" "desafio-osa_vm" {
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = file("chavepublicausopessoal2.pub")
+    public_key = file(pathexpand(var.ssh_public_key))
   }
 
   boot_diagnostics {
