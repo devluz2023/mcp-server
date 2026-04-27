@@ -263,68 +263,62 @@ def deploy_modelo(nome_arquivo: str):
 
 
 def bundle_job_yaml():
-
     """
-    Lê YAML fixo e cria Job no Databricks usando SDK tipado corretamente.
+    Faz deploy do job YAML direto via REST API (sem conversão manual)
     """
 
     import os
     import yaml
+    import requests
     from dotenv import load_dotenv
-    from databricks.sdk import WorkspaceClient
-    from databricks.sdk.service.compute import Library, PythonLibrary, PythonPyPiLibrary
-    from databricks.sdk.service.jobs import Task, SparkPythonTask
 
     load_dotenv()
-
-    w = WorkspaceClient(
-        host=os.getenv("DATABRICKS_HOST"),
-        token=os.getenv("DATABRICKS_TOKEN")
-    )
 
     try:
         base_dir = os.path.dirname(os.path.abspath(__file__))
 
-        yaml_path = os.path.join(
-            base_dir,
-            "..",
-            "models",
-            "job_model.yaml"
-        )
+        yaml_path = os.path.join(base_dir, "..", "models", "job_model.yaml")
 
         if not os.path.exists(yaml_path):
             return f"❌ YAML não encontrado: {yaml_path}"
 
+        # =========================
+        # LER YAML
+        # =========================
         with open(yaml_path, "r") as f:
             config = yaml.safe_load(f)
 
-        job_cfg = list(config["resources"]["jobs"].values())[0]
-        task_cfg = job_cfg["tasks"][0]
+        jobs = config["resources"]["jobs"]
+        job_key = list(jobs.keys())[0]
+        job_cfg = jobs[job_key]
 
         # =========================
-        # SDK TIPADO (CORRETO)
+        # CHAMAR API DIRETA
         # =========================
-        task = Task(
-            task_key=task_cfg["task_key"],
-            existing_cluster_id=task_cfg["existing_cluster_id"],
-            spark_python_task=SparkPythonTask(
-                python_file=task_cfg["spark_python_task"]["python_file"]
-            ),
-            libraries=[
-                Library(pypi=PythonPyPiLibrary(package="optuna")),
-                Library(pypi=PythonPyPiLibrary(package="scikit-learn")),
-                Library(pypi=PythonPyPiLibrary(package="pandas"))
-]
+        url = f"{os.getenv('DATABRICKS_HOST')}/api/2.1/jobs/create"
+
+        headers = {
+            "Authorization": f"Bearer {os.getenv('DATABRICKS_TOKEN')}",
+            "Content-Type": "application/json"
+        }
+
+        response = requests.post(
+            url,
+            headers=headers,
+            json=job_cfg   # 🔥 manda direto o YAML convertido
         )
 
-        response = w.jobs.create(
-            name=job_cfg["name"],
-            tasks=[task]
-        )
+        if response.status_code != 200:
+            return {
+                "status": "error",
+                "message": response.text
+            }
+
+        data = response.json()
 
         return {
             "status": "success",
-            "job_id": response.job_id,
+            "job_id": data.get("job_id"),
             "job_name": job_cfg["name"]
         }
 
@@ -333,7 +327,6 @@ def bundle_job_yaml():
             "status": "error",
             "message": str(e)
         }
-
 
 import os
 import pandas as pd

@@ -1,602 +1,156 @@
 {
-  "display_name": "Drift Metrics (PSI & KS)",
+  "display_name" : "Dashboard de Monitoramento de Agentes",
   "datasets": [
     {
-      "name": "drift_metrics",
-      "displayName": "Drift Metrics (PSI & KS)",
+      "name": "drift",
+      "displayName": "Drift",
       "queryLines": [
-        "WITH dates AS (\n",
-        "  SELECT\n",
-        "    explode(sequence(DATE '2025-01-01', DATE '2026-04-01', INTERVAL 1 MONTH)) AS reference_date\n",
-        "),\n",
-        "features AS (\n",
-        "  SELECT\n",
-        "    col AS feature\n",
-        "  FROM\n",
-        "    VALUES ('income'), ('age'), ('credit_score'), ('debt_ratio'), ('employment_years') AS t(col)\n",
-        "),\n",
-        "base AS (\n",
-        "  SELECT\n",
-        "    d.reference_date,\n",
-        "    f.feature,\n",
-        "    ABS(HASH(CONCAT(CAST(d.reference_date AS STRING), f.feature))) % 1000 / 1000.0 AS noise1,\n",
-        "    ABS(HASH(CONCAT(CAST(d.reference_date AS STRING), f.feature, 'ks'))) % 1000 / 1000.0 AS noise2\n",
-        "  FROM\n",
-        "    dates d CROSS JOIN features f\n",
-        ")\n",
         "SELECT\n",
-        "  reference_date,\n",
-        "  feature,\n",
-        "  ROUND(\n",
-        "    CASE\n",
-        "      WHEN feature = 'income' THEN 0.02 + (MONTH(reference_date) * 0.012) + noise1 * 0.05\n",
-        "      WHEN feature = 'age' THEN 0.01 + noise1 * 0.04\n",
-        "      WHEN feature = 'credit_score' THEN 0.03 + (MONTH(reference_date) * 0.015) + noise1 * 0.06\n",
-        "      WHEN\n",
-        "        feature = 'debt_ratio'\n",
-        "      THEN\n",
-        "        0.05 + (DATEDIFF(reference_date, DATE '2025-01-01') / 365.0) * 0.2 + noise1 * 0.04\n",
-        "      WHEN feature = 'employment_years' THEN 0.015 + noise1 * 0.03\n",
-        "    END,\n",
-        "    4\n",
-        "  ) AS psi_value,\n",
-        "  ROUND(\n",
-        "    CASE\n",
-        "      WHEN feature = 'income' THEN 0.03 + (MONTH(reference_date) * 0.008) + noise2 * 0.04\n",
-        "      WHEN feature = 'age' THEN 0.02 + noise2 * 0.03\n",
-        "      WHEN feature = 'credit_score' THEN 0.04 + (MONTH(reference_date) * 0.01) + noise2 * 0.05\n",
-        "      WHEN\n",
-        "        feature = 'debt_ratio'\n",
-        "      THEN\n",
-        "        0.06 + (DATEDIFF(reference_date, DATE '2025-01-01') / 365.0) * 0.15 + noise2 * 0.03\n",
-        "      WHEN feature = 'employment_years' THEN 0.02 + noise2 * 0.025\n",
-        "    END,\n",
-        "    4\n",
-        "  ) AS ks_statistic,\n",
-        "  CASE\n",
-        "    WHEN\n",
-        "      ROUND(\n",
-        "        CASE\n",
-        "          WHEN feature = 'income' THEN 0.02 + (MONTH(reference_date) * 0.012) + noise1 * 0.05\n",
-        "          WHEN feature = 'age' THEN 0.01 + noise1 * 0.04\n",
-        "          WHEN feature = 'credit_score' THEN 0.03 + (MONTH(reference_date) * 0.015) + noise1 * 0.06\n",
-        "          WHEN\n",
-        "            feature = 'debt_ratio'\n",
-        "          THEN\n",
-        "            0.05 + (DATEDIFF(reference_date, DATE '2025-01-01') / 365.0) * 0.2 + noise1 * 0.04\n",
-        "          WHEN feature = 'employment_years' THEN 0.015 + noise1 * 0.03\n",
-        "        END,\n",
-        "        4\n",
-        "      ) >= 0.25\n",
-        "    THEN\n",
-        "      'Alto'\n",
-        "    WHEN\n",
-        "      ROUND(\n",
-        "        CASE\n",
-        "          WHEN feature = 'income' THEN 0.02 + (MONTH(reference_date) * 0.012) + noise1 * 0.05\n",
-        "          WHEN feature = 'age' THEN 0.01 + noise1 * 0.04\n",
-        "          WHEN feature = 'credit_score' THEN 0.03 + (MONTH(reference_date) * 0.015) + noise1 * 0.06\n",
-        "          WHEN\n",
-        "            feature = 'debt_ratio'\n",
-        "          THEN\n",
-        "            0.05 + (DATEDIFF(reference_date, DATE '2025-01-01') / 365.0) * 0.2 + noise1 * 0.04\n",
-        "          WHEN feature = 'employment_years' THEN 0.015 + noise1 * 0.03\n",
-        "        END,\n",
-        "        4\n",
-        "      ) >= 0.1\n",
-        "    THEN\n",
-        "      'Moderado'\n",
-        "    ELSE 'Estável'\n",
-        "  END AS psi_status,\n",
-        "  CASE\n",
-        "    WHEN\n",
-        "      ROUND(\n",
-        "        CASE\n",
-        "          WHEN feature = 'income' THEN 0.03 + (MONTH(reference_date) * 0.008) + noise2 * 0.04\n",
-        "          WHEN feature = 'age' THEN 0.02 + noise2 * 0.03\n",
-        "          WHEN feature = 'credit_score' THEN 0.04 + (MONTH(reference_date) * 0.01) + noise2 * 0.05\n",
-        "          WHEN\n",
-        "            feature = 'debt_ratio'\n",
-        "          THEN\n",
-        "            0.06 + (DATEDIFF(reference_date, DATE '2025-01-01') / 365.0) * 0.15 + noise2 * 0.03\n",
-        "          WHEN feature = 'employment_years' THEN 0.02 + noise2 * 0.025\n",
-        "        END,\n",
-        "        4\n",
-        "      ) >= 0.15\n",
-        "    THEN\n",
-        "      'Drift Detectado'\n",
-        "    WHEN\n",
-        "      ROUND(\n",
-        "        CASE\n",
-        "          WHEN feature = 'income' THEN 0.03 + (MONTH(reference_date) * 0.008) + noise2 * 0.04\n",
-        "          WHEN feature = 'age' THEN 0.02 + noise2 * 0.03\n",
-        "          WHEN feature = 'credit_score' THEN 0.04 + (MONTH(reference_date) * 0.01) + noise2 * 0.05\n",
-        "          WHEN\n",
-        "            feature = 'debt_ratio'\n",
-        "          THEN\n",
-        "            0.06 + (DATEDIFF(reference_date, DATE '2025-01-01') / 365.0) * 0.15 + noise2 * 0.03\n",
-        "          WHEN feature = 'employment_years' THEN 0.02 + noise2 * 0.025\n",
-        "        END,\n",
-        "        4\n",
-        "      ) >= 0.08\n",
-        "    THEN\n",
-        "      'Alerta'\n",
-        "    ELSE 'Normal'\n",
-        "  END AS ks_status\n",
+        "  *\n",
         "FROM\n",
-        "  base\n",
-        "ORDER BY\n",
-        "  reference_date,\n",
-        "  feature"
+        "  VALUES\n",
+        "    ('Jan', 0.03, 0.05),\n",
+        "    ('Fev', 0.08, 0.09),\n",
+        "    ('Mar', 0.12, 0.11),\n",
+        "    ('Abr', 0.18, 0.16),\n",
+        "    ('Mai', 0.28, 0.21),\n",
+        "    ('Jun', 0.40, 0.30) AS t(mes, psi, ks)"
       ]
     }
   ],
   "pages": [
     {
-      "name": "15075d0e",
+      "name": "c18c25f4",
       "displayName": "Untitled page",
       "layout": [
         {
           "widget": {
-            "name": "71e6b786",
+            "name": "af9699ef",
             "multilineTextboxSpec": {
               "lines": [
-                "## 📊 Monitoramento de Drift — PSI & Kolmogorov-Smirnov"
+                "## Monitoramento de Drift — PSI & KS"
               ]
             }
           },
           "position": {
             "x": 0,
             "y": 0,
-            "width": 10,
-            "height": 1
-          }
-        },
-        {
-          "widget": {
-            "name": "feature_filter",
-            "queries": [
-              {
-                "name": "dashboards/01f141e017df1f3da602ca4a62fcb479/datasets/01f141e04bb110d3abdcdb7c4007a893_feature",
-                "query": {
-                  "datasetName": "drift_metrics",
-                  "fields": [
-                    {
-                      "name": "feature",
-                      "expression": "`feature`"
-                    },
-                    {
-                      "name": "feature_associativity",
-                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
-                    }
-                  ],
-                  "disaggregated": false
-                }
-              }
-            ],
-            "spec": {
-              "version": 2,
-              "frame": {
-                "title": "Feature",
-                "showTitle": true
-              },
-              "widgetType": "filter-multi-select",
-              "encodings": {
-                "fields": [
-                  {
-                    "fieldName": "feature",
-                    "queryName": "dashboards/01f141e017df1f3da602ca4a62fcb479/datasets/01f141e04bb110d3abdcdb7c4007a893_feature"
-                  }
-                ]
-              }
-            }
-          },
-          "position": {
-            "x": 10,
-            "y": 0,
-            "width": 2,
-            "height": 1
-          }
-        },
-        {
-          "widget": {
-            "name": "psi_line",
-            "queries": [
-              {
-                "name": "main_query",
-                "query": {
-                  "datasetName": "drift_metrics",
-                  "fields": [
-                    {
-                      "name": "feature",
-                      "expression": "`feature`"
-                    },
-                    {
-                      "name": "reference_date",
-                      "expression": "`reference_date`"
-                    },
-                    {
-                      "name": "psi_value",
-                      "expression": "`psi_value`"
-                    }
-                  ],
-                  "disaggregated": true
-                }
-              }
-            ],
-            "spec": {
-              "version": 3,
-              "frame": {
-                "title": "PSI por Feature ao Longo do Tempo",
-                "showTitle": true
-              },
-              "widgetType": "line",
-              "encodings": {
-                "x": {
-                  "fieldName": "reference_date",
-                  "displayName": "Mês",
-                  "scale": {
-                    "type": "temporal"
-                  }
-                },
-                "y": {
-                  "fieldName": "psi_value",
-                  "displayName": "PSI",
-                  "scale": {
-                    "type": "quantitative"
-                  }
-                },
-                "color": {
-                  "fieldName": "feature",
-                  "displayName": "Feature",
-                  "scale": {
-                    "type": "categorical"
-                  }
-                }
-              }
-            }
-          },
-          "position": {
-            "x": 0,
-            "y": 1,
-            "width": 6,
-            "height": 5
-          }
-        },
-        {
-          "widget": {
-            "name": "ks_line",
-            "queries": [
-              {
-                "name": "main_query",
-                "query": {
-                  "datasetName": "drift_metrics",
-                  "fields": [
-                    {
-                      "name": "feature",
-                      "expression": "`feature`"
-                    },
-                    {
-                      "name": "reference_date",
-                      "expression": "`reference_date`"
-                    },
-                    {
-                      "name": "ks_statistic",
-                      "expression": "`ks_statistic`"
-                    }
-                  ],
-                  "disaggregated": true
-                }
-              }
-            ],
-            "spec": {
-              "version": 3,
-              "frame": {
-                "title": "KS Statistic por Feature ao Longo do Tempo",
-                "showTitle": true
-              },
-              "widgetType": "line",
-              "encodings": {
-                "x": {
-                  "fieldName": "reference_date",
-                  "displayName": "Mês",
-                  "scale": {
-                    "type": "temporal"
-                  }
-                },
-                "y": {
-                  "fieldName": "ks_statistic",
-                  "displayName": "KS Statistic",
-                  "scale": {
-                    "type": "quantitative"
-                  }
-                },
-                "color": {
-                  "fieldName": "feature",
-                  "displayName": "Feature",
-                  "scale": {
-                    "type": "categorical"
-                  }
-                }
-              }
-            }
-          },
-          "position": {
-            "x": 6,
-            "y": 1,
-            "width": 6,
-            "height": 5
-          }
-        },
-        {
-          "widget": {
-            "name": "psi_heatmap",
-            "queries": [
-              {
-                "name": "main_query",
-                "query": {
-                  "datasetName": "drift_metrics",
-                  "fields": [
-                    {
-                      "name": "psi_value",
-                      "expression": "`psi_value`"
-                    },
-                    {
-                      "name": "reference_date",
-                      "expression": "`reference_date`"
-                    }
-                  ],
-                  "disaggregated": true
-                }
-              }
-            ],
-            "spec": {
-              "version": 3,
-              "frame": {
-                "title": "Heatmap PSI",
-                "showTitle": true
-              },
-              "widgetType": "heatmap",
-              "encodings": {
-                "x": {
-                  "fieldName": "reference_date",
-                  "axis": {
-                    "hideTitle": true
-                  },
-                  "displayName": "Mês",
-                  "scale": {
-                    "type": "temporal"
-                  }
-                },
-                "y": {
-                  "fieldName": "psi_value",
-                  "displayName": "PSI",
-                  "scale": {
-                    "type": "quantitative"
-                  }
-                },
-                "color": {
-                  "fieldName": "psi_value",
-                  "displayName": "PSI",
-                  "scale": {
-                    "type": "quantitative"
-                  }
-                },
-                "label": {
-                  "show": true
-                }
-              }
-            }
-          },
-          "position": {
-            "x": 0,
-            "y": 6,
-            "width": 6,
-            "height": 4
-          }
-        },
-        {
-          "widget": {
-            "name": "ks_heatmap",
-            "queries": [
-              {
-                "name": "main_query",
-                "query": {
-                  "datasetName": "drift_metrics",
-                  "fields": [
-                    {
-                      "name": "ks_statistic",
-                      "expression": "`ks_statistic`"
-                    },
-                    {
-                      "name": "reference_date",
-                      "expression": "`reference_date`"
-                    }
-                  ],
-                  "disaggregated": true
-                }
-              }
-            ],
-            "spec": {
-              "version": 3,
-              "frame": {
-                "title": "Heatmap KS",
-                "showTitle": true
-              },
-              "widgetType": "heatmap",
-              "encodings": {
-                "x": {
-                  "fieldName": "reference_date",
-                  "axis": {
-                    "hideTitle": true
-                  },
-                  "displayName": "Mês",
-                  "scale": {
-                    "type": "temporal"
-                  }
-                },
-                "y": {
-                  "fieldName": "ks_statistic",
-                  "displayName": "KS",
-                  "scale": {
-                    "type": "quantitative"
-                  }
-                },
-                "color": {
-                  "fieldName": "ks_statistic",
-                  "displayName": "KS",
-                  "scale": {
-                    "type": "quantitative"
-                  }
-                },
-                "label": {
-                  "show": true
-                }
-              }
-            }
-          },
-          "position": {
-            "x": 6,
-            "y": 6,
-            "width": 6,
-            "height": 4
-          }
-        },
-        {
-          "widget": {
-            "name": "drift_table",
-            "queries": [
-              {
-                "name": "main_query",
-                "query": {
-                  "datasetName": "drift_metrics",
-                  "fields": [
-                    {
-                      "name": "reference_date",
-                      "expression": "`reference_date`"
-                    },
-                    {
-                      "name": "feature",
-                      "expression": "`feature`"
-                    },
-                    {
-                      "name": "psi_value",
-                      "expression": "`psi_value`"
-                    },
-                    {
-                      "name": "psi_status",
-                      "expression": "`psi_status`"
-                    },
-                    {
-                      "name": "ks_statistic",
-                      "expression": "`ks_statistic`"
-                    },
-                    {
-                      "name": "ks_status",
-                      "expression": "`ks_status`"
-                    }
-                  ],
-                  "disaggregated": true
-                }
-              }
-            ],
-            "spec": {
-              "version": 2,
-              "frame": {
-                "title": "Detalhes do Drift",
-                "showTitle": true
-              },
-              "rowsPerPage": 25,
-              "widgetType": "table",
-              "encodings": {
-                "columns": [
-                  {
-                    "fieldName": "reference_date",
-                    "displayName": "Data"
-                  },
-                  {
-                    "fieldName": "feature",
-                    "displayName": "Feature"
-                  },
-                  {
-                    "fieldName": "psi_value",
-                    "displayName": "PSI"
-                  },
-                  {
-                    "fieldName": "psi_status",
-                    "displayName": "Status PSI",
-                    "style": {
-                      "type": "basic",
-                      "rules": [
-                        {
-                          "condition": {
-                            "operand": {
-                              "type": "data-value",
-                              "value": "Alto"
-                            },
-                            "operator": "="
-                          },
-                          "backgroundColor": "#FFCDD2",
-                          "foregroundColor": "#B71C1C"
-                        },
-                        {
-                          "condition": {
-                            "operand": {
-                              "type": "data-value",
-                              "value": "Moderado"
-                            },
-                            "operator": "="
-                          },
-                          "backgroundColor": "#FFF9C4",
-                          "foregroundColor": "#F57F17"
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "fieldName": "ks_statistic",
-                    "displayName": "KS"
-                  },
-                  {
-                    "fieldName": "ks_status",
-                    "displayName": "Status KS",
-                    "style": {
-                      "type": "basic",
-                      "rules": [
-                        {
-                          "condition": {
-                            "operand": {
-                              "type": "data-value",
-                              "value": "Drift Detectado"
-                            },
-                            "operator": "="
-                          },
-                          "backgroundColor": "#FFCDD2",
-                          "foregroundColor": "#B71C1C"
-                        },
-                        {
-                          "condition": {
-                            "operand": {
-                              "type": "data-value",
-                              "value": "Alerta"
-                            },
-                            "operator": "="
-                          },
-                          "backgroundColor": "#FFF9C4",
-                          "foregroundColor": "#F57F17"
-                        }
-                      ]
-                    }
-                  }
-                ]
-              }
-            }
-          },
-          "position": {
-            "x": 0,
-            "y": 10,
             "width": 12,
-            "height": 5
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "psi_chart",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "drift",
+                  "fields": [
+                    {
+                      "name": "mes",
+                      "expression": "`mes`"
+                    },
+                    {
+                      "name": "psi",
+                      "expression": "`psi`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "PSI",
+                "showTitle": true
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "mes",
+                  "displayName": "Mês",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "psi",
+                  "displayName": "PSI",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "ks_chart",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "drift",
+                  "fields": [
+                    {
+                      "name": "mes",
+                      "expression": "`mes`"
+                    },
+                    {
+                      "name": "ks",
+                      "expression": "`ks`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Kolmogorov-Smirnov",
+                "showTitle": true
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "mes",
+                  "displayName": "Mês",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "ks",
+                  "displayName": "KS",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 2,
+            "width": 6,
+            "height": 6
           }
         }
       ],
