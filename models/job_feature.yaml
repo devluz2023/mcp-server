@@ -11,17 +11,5 @@ resources:
           libraries:
             - pypi:
                 package: optuna
-            - pypi:
-                package: "catboost"
-            - pypi:
-                package: "mlflow"
-            - pypi:
-                package: "pandas"
-            - pypi:
-                package: "scikit-learn"
-            - pypi:
-                package: "pyarrow"
-            - pypi:
-                package: "pyspark"
       queue:
-        enabled: true d
+        enabled: true

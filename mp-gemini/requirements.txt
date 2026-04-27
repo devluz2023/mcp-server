@@ -1,20 +1,34 @@
-streamlit
-python-dotenv
+# Core Frameworks
+streamlit==1.56.0
+databricks-connect==13.3.0
+pyspark==3.4.1
+py4j==0.10.9.7
 
-langchain
-langchain-openai
-langchain-core
-langchain-community
+# Data Processing & ML
+pandas==2.3.3
+numpy==1.26.4
+pyarrow==24.0.0
+SQLAlchemy==2.0.49
+chromadb==1.5.8
 
-chromadb
-tiktoken
+# AI & LLM Integrations
+openai==2.32.0
+langchain==1.2.15
+langchain-community==0.4.1
+langchain-core==1.3.2
+langchain-openai==1.2.1
+langgraph==1.1.9
+pydantic==2.13.3
 
-pypdf
+# Networking & Async
+aiohttp==3.13.5
+httpx==0.28.1
+requests==2.33.1
+uvicorn==0.46.0
+mcp==1.27.0
 
-mcp
-# SDK oficial do Databricks
-databricks-sdk
-# Interface gráfica
+# Databricks & Cloud
+databricks-sdk==0.105.0
+kubernetes==35.0.0
 
-# Utilitários assíncronos (necessários para o cliente MCP no Streamlit)
-asyncio
+scipy==1.16.0

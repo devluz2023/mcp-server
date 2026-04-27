@@ -42,7 +42,7 @@ variable "azdo_org_url" {
 }
 
 variable "ssh_public_key" {
-  default = "~/.ssh/id_rsa.pub"
+  default = "id_rsa.pub"
 }
 variable "resource_group_location" {
  default     = "eastus"

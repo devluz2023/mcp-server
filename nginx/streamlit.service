@@ -1,0 +1,12 @@
+[Unit]
+Description=Streamlit App
+After=network.target
+
+[Service]
+User=azureuser
+WorkingDirectory=/home/azureuser/mcp-server/mp-gemini
+ExecStart=/home/azureuser/mcp-server/mp-gemini/venv/bin/streamlit run app.py --server.port 8080
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

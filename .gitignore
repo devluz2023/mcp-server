@@ -5,7 +5,8 @@ __pycache__/
 
 # C extensions
 *.so
-
+# Arquivos de chave pública
+*.pub
 # Distribution / packaging
 .Python
 build/

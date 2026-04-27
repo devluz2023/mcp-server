@@ -272,6 +272,7 @@ def bundle_job_yaml():
     import yaml
     from dotenv import load_dotenv
     from databricks.sdk import WorkspaceClient
+    from databricks.sdk.service.compute import Library, PythonLibrary, PythonPyPiLibrary
     from databricks.sdk.service.jobs import Task, SparkPythonTask
 
     load_dotenv()
@@ -308,7 +309,12 @@ def bundle_job_yaml():
             existing_cluster_id=task_cfg["existing_cluster_id"],
             spark_python_task=SparkPythonTask(
                 python_file=task_cfg["spark_python_task"]["python_file"]
-            )
+            ),
+            libraries=[
+                Library(pypi=PythonPyPiLibrary(package="optuna")),
+                Library(pypi=PythonPyPiLibrary(package="scikit-learn")),
+                Library(pypi=PythonPyPiLibrary(package="pandas"))
+]
         )
 
         response = w.jobs.create(
