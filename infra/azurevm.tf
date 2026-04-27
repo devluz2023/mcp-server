@@ -13,7 +13,7 @@ resource "azurerm_resource_group" "rg" {
 resource "azurerm_network_interface" "desafio-osa" {
   name                = "desafio-osa-nic"
   location            = azurerm_resource_group.rg.location
-  resource_group_name =  azurerm_resource_group.rg.name
+  resource_group_name  = azurerm_resource_group.rg.name
 
   ip_configuration {
     name                          = "desafio-osa-ipconfig"
@@ -21,6 +21,12 @@ resource "azurerm_network_interface" "desafio-osa" {
     public_ip_address_id          = azurerm_public_ip.desafio-osa.id
     private_ip_address_allocation = "Dynamic"
   }
+}
+
+# Associa o NSG à interface de rede
+resource "azurerm_network_interface_security_group_association" "desafio-osa" {
+  network_interface_id      = azurerm_network_interface.desafio-osa.id
+  network_security_group_id = azurerm_network_security_group.desafio-osa.id
 }
 
 resource "azurerm_virtual_network" "desafio-osa" {
