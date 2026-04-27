@@ -1,5 +1,4 @@
 {
-  "display_name" : "Dashboard de Monitoramento de Agentes",
   "datasets": [
     {
       "name": "drift",

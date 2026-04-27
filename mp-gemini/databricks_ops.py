@@ -153,8 +153,13 @@ def calcular_custo(run_id: int):
     return "Custo não disponível ou Run ID inválido."
 
 
+import os
+import json
+import requests
+from dotenv import load_dotenv
 
 def criar_dashboard_padrao():
+    load_dotenv()
     try:
         base_dir = os.path.dirname(os.path.abspath(__file__))
         caminho = os.path.join(
@@ -164,8 +169,20 @@ def criar_dashboard_padrao():
             "agent_monitoring_dashboard.lvdash.json"
         )
 
+        if not os.path.exists(caminho):
+            return "Erro: Arquivo do dashboard não encontrado."
+
         with open(caminho, "r") as f:
-            payload = json.load(f)
+            conteudo_dashboard = json.load(f)
+
+        # Construção do payload conforme exigido pela documentação da API Lakeview
+        # O campo 'serialized_dashboard' precisa ser uma string JSON, 
+        # por isso usamos json.dumps() no objeto carregado.
+        payload = {
+            "display_name": "Agent Monitoring Dashboard",
+            "warehouse_id": os.getenv("DATABRICKS_WAREHOUSE_ID"),
+            "serialized_dashboard": json.dumps(conteudo_dashboard)           
+        }
 
         url = f"{os.getenv('DATABRICKS_HOST')}/api/2.0/lakeview/dashboards"
 
@@ -177,15 +194,13 @@ def criar_dashboard_padrao():
         response = requests.post(url, headers=headers, json=payload)
 
         if response.status_code != 200:
-            return f"Erro: {response.text}"
+            return f"Erro na API ({response.status_code}): {response.text}"
 
         data = response.json()
-
         return f"Dashboard criado! ID: {data.get('dashboard_id')}"
 
     except Exception as e:
-        return str(e)
-
+        return f"Erro inesperado: {str(e)}"
 
 def listar_modelos():
     base_dir = os.path.dirname(os.path.abspath(__file__))
