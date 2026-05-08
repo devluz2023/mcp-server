@@ -1,0 +1,1523 @@
+
+--- ARQUIVO: ./Readme copy.md ---
+src/
+├── domain/                  # NÚCLEO: O que o sistema é e faz
+│   ├── entities/            # Objetos puros: DatabricksJob, Agent, Prompt, DriftResult
+│   ├── repositories/        # Interfaces (Contratos): JobRepositoryPort, LLMProviderPort
+│   └── use_cases/           # Regras de orquestração: ExecutarFluxoAgente, ValidarDrift
+│
+├── application/             # CAMADA DE APLICAÇÃO: O maestro do fluxo
+│   ├── services/            # Serviços: JobService, DriftAnalysisService, AgentService
+│   └── ports/               # Portas (Interfaces): ToolPort, LLMProviderPort
+│
+├── infrastructure/          # CAMADA EXTERNA: Onde o sistema toca no "mundo real"
+│   ├── llm_gateways/        # Wrappers de APIs: OpenAIGateway, AnthropicGateway
+│   ├── repositories/        # Implementações reais: DatabricksJobRepository, SQLRepository
+│   ├── tools/               # Ferramentas de Agente (concretas):
+│   │   ├── drift_tool.py    # Implementação da lógica de drift (scipy/spark)
+│   │   ├── job_tool.py      # Execução de jobs no Databricks
+│   │   └── registry.py      # Registrador central de ferramentas
+│   └── mcp_server/          # Adaptador de entrada: Implementação do FastMCP
+│
+├── interfaces/              # ADAPTADORES: Como o usuário/sistema entra
+│   ├── api/                 # Endpoints FastAPI/REST
+│   ├── cli/                 # Comandos CLI
+│   └── streamlit_app/       # View (UI) do Streamlit
+│       ├── main.py          # Entrypoint da interface
+│       └── components/      # Widgets de visualização
+│
+└── tests/                   # QUALIDADE: Evals e Testes
+    ├── unit/                # Testes de Entidades e Services (mocks)
+    ├── integration/         # Testes de Gateway e Repositories (reais)
+    └── evals/               # Evals de LLM (Golden Datasets para prompts)
+
+--- ARQUIVO: ./git.py ---
+import os
+from azure.devops.connection import Connection
+from msrest.authentication import BasicAuthentication
+from azure.devops.exceptions import AzureDevOpsServiceError
+from azure.devops.v7_1.git.models import GitPullRequestSearchCriteria
+from dotenv import load_dotenv # Adicione esta linha
+# --- CONFIGURAÇÕES ---
+# ⚠️ Lembre-se de rotacionar seu PAT após os testes por segurança.
+load_dotenv()
+
+PERSONAL_ACCESS_TOKEN = os.getenv('PERSONAL_ACCESS_TOKEN')
+ORGANIZATION_URL = os.getenv('ORGANIZATION_URL')
+PROJECT_NAME = os.getenv('PROJECT_NAME')
+REPOSITORY_NAME = os.getenv('REPOSITORY_NAME')
+BRANCH_NAME = os.getenv('BRANCH_NAME')
+
+def obter_git_client():
+    """Helper para centralizar a conexão"""
+    credentials = BasicAuthentication('', PERSONAL_ACCESS_TOKEN)
+    connection = Connection(base_url=ORGANIZATION_URL, creds=credentials)
+    return connection.clients.get_git_client()
+
+def garantir_repositorio(git_client):
+    """Função 1: Garante que o repositório existe (Cria se necessário)"""
+    try:
+        repo = git_client.get_repository(repository_id=REPOSITORY_NAME, project=PROJECT_NAME)
+        print(f"✅ Repositório encontrado: {repo.name}")
+        return repo
+    except AzureDevOpsServiceError:
+        print(f"ℹ️ Repositório '{REPOSITORY_NAME}' não encontrado. Criando...")
+        repo_to_create = {'name': REPOSITORY_NAME}
+        repo = git_client.create_repository(repo_to_create, project=PROJECT_NAME)
+        print(f"✅ Repositório criado com sucesso: {repo.name}")
+        return repo
+
+def versionar_arquivo_local(git_client, repo):
+    """Função 2: Lê o arquivo readme_Teste.py e faz o commit"""
+    nome_arquivo_local = 'readme_Teste.py'
+    
+    if not os.path.exists(nome_arquivo_local):
+        print(f"❌ Erro: O arquivo '{nome_arquivo_local}' não foi encontrado na raiz.")
+        return
+
+    # Lendo o conteúdo do arquivo físico
+    with open(nome_arquivo_local, 'r', encoding='utf-8') as f:
+        conteudo = f.read()
+
+    # Obtendo o ID do último commit para evitar conflito de histórico
+    old_object_id = "0000000000000000000000000000000000000000"
+    try:
+        refs = git_client.get_refs(repository_id=repo.id, project=PROJECT_NAME, filter="heads/main")
+        if refs:
+            old_object_id = refs[0].object_id
+    except Exception:
+        pass
+
+    # Verificando se o arquivo já existe no repo para decidir entre 'add' ou 'edit'
+    # Por segurança, vamos usar 'add' para a primeira vez. 
+    # Se rodar denovo e o arquivo já estiver lá, use 'edit'.
+    push = {
+        'commits': [{
+            'comment': f'Upload de {nome_arquivo_local} via SDK',
+            'changes': [
+                {
+                    'changeType': 'add', 
+                    'item': {'path': f'/{nome_arquivo_local}'},
+                    'newContent': {'content': conteudo, 'contentType': 'rawText'}
+                }
+            ]
+        }],
+        'refUpdates': [{
+            'name': BRANCH_NAME,
+            'oldObjectId': old_object_id
+        }]
+    }
+
+    try:
+        git_client.create_push(push, repository_id=repo.id, project=PROJECT_NAME)
+        print(f"🚀 Sucesso! Arquivo '{nome_arquivo_local}' versionado.")
+    except Exception as e:
+        print(f"⚠️ Falha no push (pode ser que o arquivo já exista): {e}")
+
+def criar_gitflow_branches(git_client, repo):
+    """Função 3: Cria as branches de dev, qas e prod a partir da main"""
+    # Lista das branches que queremos criar
+    branches_para_criar = ['dev', 'qas', 'prod']
+    
+    try:
+        # 1. Obter o ID do último commit da branch main (base para as novas branches)
+        refs = git_client.get_refs(repository_id=repo.id, project=PROJECT_NAME, filter="heads/main")
+        if not refs:
+            print("❌ Erro: Branch 'main' não encontrada para servir de base.")
+            return
+        
+        main_sha = refs[0].object_id
+        print(f"ℹ️ Base para GitFlow (main SHA): {main_sha}")
+
+        # 2. Criar cada branch
+        for branch_name in branches_para_criar:
+            full_branch_path = f"refs/heads/{branch_name}"
+            
+            # Estrutura para criar uma nova referência (branch)
+            ref_update = [{
+                "name": full_branch_path,
+                "oldObjectId": "0000000000000000000000000000000000000000", # Indica nova branch
+                "newObjectId": main_sha
+            }]
+
+            try:
+                git_client.update_refs(ref_update, repository_id=repo.id, project=PROJECT_NAME)
+                print(f"✅ Branch criada: {branch_name}")
+            except AzureDevOpsServiceError as e:
+                # Caso a branch já exista, ele retornará um erro
+                if "already exists" in str(e) or "RefUpdateStatus.Exists" in str(e):
+                    print(f"ℹ️ Branch '{branch_name}' já existe. Pulando...")
+                else:
+                    print(f"⚠️ Erro ao criar branch {branch_name}: {e}")
+
+    except Exception as e:
+        print(f"❌ Erro ao processar GitFlow: {e}")
+
+def listar_pull_requests(git_client, repo):
+    """Função 4: Lista todos os Pull Requests ativos no repositório"""
+    print(f"\n🔍 Buscando Pull Requests em: {repo.name}...")
+    
+    try:
+        # Definimos o critério de busca (por padrão, busca PRs ativos/abertos)
+        search_criteria = GitPullRequestSearchCriteria(
+            status='active'  # Pode ser 'active', 'completed', 'abandoned' ou 'all'
+        )
+
+        pull_requests = git_client.get_pull_requests(
+            repository_id=repo.id,
+            search_criteria=search_criteria,
+            project=PROJECT_NAME
+        )
+
+        if not pull_requests:
+            print("ℹ️ Nenhum Pull Request ativo encontrado.")
+            return
+
+        print(f"✅ Encontrados {len(pull_requests)} PR(s):")
+        for pr in pull_requests:
+            print(f"---")
+            print(f"ID: {pr.pull_request_id}")
+            print(f"Título: {pr.title}")
+            print(f"Criado por: {pr.created_by.display_name}")
+            print(f"De: {pr.source_ref_name} -> Para: {pr.target_ref_name}")
+            print(f"Status: {pr.status}")
+
+    except Exception as e:
+        print(f"❌ Erro ao listar Pull Requests: {e}")
+
+# --- BLOCO PRINCIPAL ATUALIZADO ---
+if __name__ == "__main__":
+    client = obter_git_client()
+    
+    # 1. Garante a infraestrutura (Repositório)
+    repositorio = garantir_repositorio(client)
+    
+    if repositorio:
+        # 2. Garante a estratégia de branches (GitFlow)
+        criar_gitflow_branches(client, repositorio)
+        
+        # 3. Sobe o arquivo local (readme_Teste.py)
+        versionar_arquivo_local(client, repositorio)
+        
+        # 4. Lista os PRs existentes
+        listar_pull_requests(client, repositorio)
+
+--- ARQUIVO: ./requirements.txt ---
+# Core Frameworks
+streamlit==1.56.0
+databricks-connect==13.3.0
+pyspark==3.4.1
+py4j==0.10.9.7
+
+# Data Processing & ML
+pandas==2.3.3
+numpy==2.3.0
+pyarrow==24.0.0
+SQLAlchemy==2.0.49
+chromadb==1.5.8
+
+# AI & LLM Integrations
+openai==2.32.0
+langchain==1.2.15
+langchain-community==0.4.1
+langchain-core==1.3.2
+langchain-openai==1.2.1
+langgraph==1.1.9
+pydantic==2.13.3
+
+# Networking & Async
+aiohttp==3.13.5
+httpx==0.28.1
+requests==2.33.1
+uvicorn==0.46.0
+mcp==1.27.0
+
+# Databricks & Cloud
+databricks-sdk==0.105.0
+kubernetes==35.0.0
+
+scipy==1.16.0
+azure-devops
+langchain-ollama
+
+--- ARQUIVO: ./Dockerfile ---
+# Imagem base leve
+FROM python:3.11-slim
+
+# Evita gerar arquivos .pyc
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Evita buffer no stdout
+ENV PYTHONUNBUFFERED=1
+
+# Diretório de trabalho
+WORKDIR /app
+
+# Copia requirements primeiro (melhor cache)
+COPY requirements.txt .
+
+# Instala dependências
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
+# Copia o resto do projeto
+COPY . .
+
+# Porta do Streamlit
+EXPOSE 8501
+
+# Comando para rodar app
+CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+
+--- ARQUIVO: ./devops.py ---
+import os
+from dotenv import load_dotenv
+from azure.devops.connection import Connection
+from msrest.authentication import BasicAuthentication
+from azure.devops.v7_1.git.models import GitPullRequestSearchCriteria
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import HumanMessage
+from azure.devops.v7_1.git.models import GitPullRequestCompletionOptions
+load_dotenv()
+
+# --- 1. CONEXÕES ---
+def obter_conexao():
+    pat = os.getenv('PERSONAL_ACCESS_TOKEN')
+    org_url = os.getenv('ORGANIZATION_URL')
+    credentials = BasicAuthentication('', pat)
+    return Connection(base_url=org_url, creds=credentials)
+
+def obter_meu_id(connection):
+    """Descobre o ID do usuário vinculado ao PAT de forma oficial"""
+    # Usamos o cliente de Identidade para buscar o perfil logado
+    identity_client = connection.clients.get_identity_client()
+    config_client = connection.clients.get_location_client()
+    
+    # Busca informações da conexão atual
+    connection_data = config_client.get_connection_data()
+    meu_id = connection_data.authenticated_user.id
+    return meu_id
+
+# --- 2. ANÁLISE E VOTO ---
+def aprovar_pull_request(git_client, pr, meu_id):
+    """Vota 10 (Approved) usando o ID validado pelo sistema"""
+    project = os.getenv('PROJECT_NAME')
+    repo_id = os.getenv('REPOSITORY_NAME')
+    
+    reviewer_vote = {
+        "vote": 10,
+        "id": meu_id
+    }
+
+    git_client.create_pull_request_reviewer(
+        reviewer_vote, 
+        repository_id=repo_id,
+        pull_request_id=pr.pull_request_id,
+        reviewer_id=meu_id, 
+        project=project
+    )
+
+# --- 3. FLUXO PRINCIPAL ---
+def processar_prs_pendentes():
+    try:
+        # Criamos a conexão uma vez
+        conexao = obter_conexao()
+        git_client = conexao.clients.get_git_client()
+        
+        # 1. Descobrimos quem somos para evitar o erro de "votar por outro"
+        meu_id = obter_meu_id(conexao)
+        print(f"👤 Autenticado como ID: {meu_id}")
+
+        project = os.getenv('PROJECT_NAME')
+        repo_id = os.getenv('REPOSITORY_NAME')
+
+        # 2. Busca PRs
+        search_criteria = GitPullRequestSearchCriteria(status='active')
+        pull_requests = git_client.get_pull_requests(repo_id, search_criteria, project=project)
+
+        for pr in pull_requests:
+            print(f"\n📑 Analisando PR #{pr.pull_request_id}: {pr.title}")
+            
+            # (Aqui você mantém suas funções de buscar_mudancas_codigo e analisar_pr_com_ai)
+            # Simulando aprovação da IA para o teste de voto:
+            decisao = "ok" # Substitua pela chamada da sua IA
+
+            if "ok" in decisao:
+                print(f"✅ IA aprovou! Votando...")
+                aprovar_pull_request(git_client, pr, meu_id)
+                print(f"⭐ PR #{pr.pull_request_id} aprovada!")
+
+    except Exception as e:
+        print(f"❌ Erro: {e}")
+def completar_pull_request(git_client, pr):
+    """Realiza o Merge e fecha a PR oficialmente"""
+    project = os.getenv('PROJECT_NAME')
+    repo_id = os.getenv('REPOSITORY_NAME')
+
+    # Configurações do Merge
+    options = GitPullRequestCompletionOptions(
+        delete_source_branch=True,          # Deleta a branch após o merge (opcional)
+        bypass_policy=False,                # Respeita as políticas da branch
+        squash_merge=True,                  # Faz squash para manter o histórico limpo
+        transition_work_items=True          # Fecha tasks vinculadas automaticamente
+    )
+
+    # Para completar, mudamos o status para 'completed' e passamos o ID do último commit
+    pr_update = {
+        "status": "completed",
+        "lastMergeSourceCommit": pr.last_merge_source_commit,
+        "completionOptions": options
+    }
+
+    try:
+        git_client.update_pull_request(
+            pr_update, 
+            repository_id=repo_id, 
+            pull_request_id=pr.pull_request_id, 
+            project=project
+        )
+        print(f"🏁 PR #{pr.pull_request_id} MERGEADA e FINALIZADA!")
+    except Exception as e:
+        print(f"⚠️ Erro ao completar PR: {e} (Verifique se há conflitos de código)")
+
+
+if __name__ == "__main__":
+    processar_prs_pendentes()
+
+--- ARQUIVO: ./Readme.md ---
+src/
+├── domain/                # Núcleo do sistema (Regras de negócio puras)
+│   ├── entities/          # Agentes, Prompts, Conversas (POJOs/Dataclasses)
+│   ├── repositories/      # Interfaces (Abstrações para persistência)
+│   └── use_cases/         # Lógica de orquestração (ex: ExecutarFluxoAgente)
+├── application/           # Camada de aplicação (Orquestradores de fluxo)
+│   ├── services/          # Serviços de coordenação de agentes
+│   └── ports/             # Definição das interfaces de saída
+├── infrastructure/        # Implementações concretas (Camada externa)
+│   ├── llm_gateways/      # Wrappers de APIs (OpenAI, Anthropic, LocalLLMs)
+│   ├── repositories/      # Implementação de DBs vetoriais (Chroma, Pinecone)
+│   └── tools/             # Implementações de ferramentas para agentes
+├── interfaces/            # Adaptadores (Camada de entrada)
+│   ├── api/               # FastAPI/REST Controllers
+│   └── cli/               # Comandos de CLI
+└── tests/                 # Testes unitários, comportamentais e Evals
+    ├── unit/
+    └── integration/
+
+--- ARQUIVO: ./estudo.py ---
+import os
+
+def compilar_arquivos(pasta_raiz, arquivo_saida, ignorar_pastas=None, ignorar_arquivos=None, ignorar_extensoes=None):
+    """
+    Compila arquivos ignorando pastas, nomes específicos e extensões.
+    """
+    if ignorar_pastas is None: ignorar_pastas = {'venv', '.git', '__pycache__'}
+    if ignorar_arquivos is None: ignorar_arquivos = {'.env', 'conteudo_total.txt'}
+    if ignorar_extensoes is None: ignorar_extensoes = {'.csv', '.pyc', '.exe'}
+
+    with open(arquivo_saida, 'w', encoding='utf-8') as outfile:
+        for root, dirs, files in os.walk(pasta_raiz):
+            # Filtra pastas em tempo real
+            dirs[:] = [d for d in dirs if d not in ignorar_pastas]
+            
+            for file in files:
+                # 1. Ignorar nomes exatos
+                if file in ignorar_arquivos:
+                    continue
+                
+                # 2. Ignorar extensões específicas
+                if any(file.endswith(ext) for ext in ignorar_extensoes):
+                    continue
+                
+                caminho_completo = os.path.join(root, file)
+                
+                try:
+                    with open(caminho_completo, 'r', encoding='utf-8') as infile:
+                        outfile.write(f"\n--- ARQUIVO: {caminho_completo} ---\n")
+                        outfile.write(infile.read())
+                        outfile.write("\n")
+                except Exception as e:
+                    print(f"Ignorando {caminho_completo} (Erro de leitura: {e})")
+
+if __name__ == "__main__":
+    compilar_arquivos(
+        pasta_raiz=".", 
+        arquivo_saida="conteudo_total.txt"
+    )
+    print("Sucesso! Conteúdo compilado com segurança.")
+
+--- ARQUIVO: ./readme_Teste.py ---
+r
+
+--- ARQUIVO: ./app.py ---
+# main.py na raiz
+import subprocess
+import sys
+import os
+
+def run_app():
+    # Caminho para o seu arquivo de interface dentro da pasta
+   # Use o caminho a partir da pasta onde o main.py está localizado
+    # main.py (raiz)
+    app_path = os.path.join("src", "interfaces", "streamlit_app", "main.py")
+    
+    print("Iniciando o Assistente Databricks...")
+    
+    # Chama o streamlit como um subprocesso
+    process = subprocess.Popen([sys.executable, "-m", "streamlit", "run", app_path])
+    
+    try:
+        process.wait()
+    except KeyboardInterrupt:
+        print("\nFinalizando aplicação...")
+        process.terminate()
+
+if __name__ == "__main__":
+    run_app()
+
+--- ARQUIVO: ./.pytest_cache/CACHEDIR.TAG ---
+Signature: 8a477f597d28d172789f06886806bc55
+# This file is a cache directory tag created by pytest.
+# For information about cache directory tags, see:
+#	https://bford.info/cachedir/spec.html
+
+
+--- ARQUIVO: ./.pytest_cache/README.md ---
+# pytest cache directory #
+
+This directory contains data from the pytest's cache plugin,
+which provides the `--lf` and `--ff` options, as well as the `cache` fixture.
+
+**Do not** commit this to version control.
+
+See [the docs](https://docs.pytest.org/en/stable/how-to/cache.html) for more information.
+
+
+--- ARQUIVO: ./.pytest_cache/.gitignore ---
+# Created by pytest automatically.
+*
+
+
+--- ARQUIVO: ./.pytest_cache/v/cache/nodeids ---
+[
+  "tests/infrastructure/tools/test_registry.py::test_agent_decision_flow_with_ollama",
+  "tests/infrastructure/tools/test_registry.py::test_agent_drift_logic"
+]
+
+--- ARQUIVO: ./.pytest_cache/v/cache/lastfailed ---
+{
+  "tests/domain/test_listar_jobs.py": true
+}
+
+--- ARQUIVO: ./tests/infrastructure/tools/test_registry.py ---
+import pytest
+from unittest.mock import MagicMock
+from src.application.services.agent_service import AgentService
+from src.infrastructure.llm_gateways.ollama_gateway import OllamaGateway
+
+def test_agent_decision_flow_with_ollama():
+    """
+    Teste de unidade para verificar se o AgentService 
+    consegue identificar a intenção de listar jobs.
+    """
+    
+    # 1. Setup: Criamos o Gateway apontando para o seu Ollama local
+    # Certifique-se que o ollama pull qwen2.5-coder:7b foi feito
+    provider = OllamaGateway(model="qwen2.5-coder:7b")
+    
+    # 2. Injetamos no serviço
+    service = AgentService(llm_provider=provider)
+    
+    # 3. Execução: Enviamos um comando que deve disparar uma ferramenta específica
+    prompt = "Pode listar os jobs do Databricks para mim?"
+    
+    # O process_message vai: 
+    # LLM (Ollama) -> Identifica Tool -> AgentService executa Tool -> Retorna String
+    resposta = service.process_message(prompt)
+    
+    # 4. Asserts: Verificamos se o fluxo passou pela lógica esperada
+    assert isinstance(resposta, str)
+    assert len(resposta) > 0
+    print(f"Resultado do teste de unidade: {resposta}")
+
+def test_agent_drift_logic():
+    """
+    Verifica se o agente aciona a ferramenta de drift corretamente.
+    """
+    provider = OllamaGateway(model="qwen2.5-coder:7b")
+    service = AgentService(llm_provider=provider)
+    
+    prompt = "Verifique se há drift nos modelos"
+    resposta = service.process_message(prompt)
+    
+    # Verificamos se a resposta contém indícios de que a tool foi chamada
+    assert resposta is not None
+
+--- ARQUIVO: ./tests/domain/test_listar_jobs.py ---
+import pytest
+from unittest.mock import MagicMock
+from src.domain.entities.job import DatabricksJob
+from src.domain.repositories.job_repository import JobRepositoryPort
+from src.application.use_cases.listar_jobs import ListarJobs  # Exemplo de caminho
+
+def test_listar_jobs_deve_retornar_lista_correta():
+    # 1. ARRANGE (Preparação)
+    # Criamos um "mock" que implementa a interface do repositório
+    mock_repo = MagicMock(spec=JobRepositoryPort)
+    
+    # Definimos o que o mock deve retornar quando chamado
+    mock_repo.list_jobs.return_value = [
+        DatabricksJob(job_id=1, name="Job Teste 1"),
+        DatabricksJob(job_id=2, name="Job Teste 2")
+    ]
+    
+    # Injetamos o mock no nosso caso de uso
+    use_case = ListarJobs(repository=mock_repo)
+    
+    # 2. ACT (Execução)
+    resultado = use_case.execute()
+    
+    # 3. ASSERT (Verificação)
+    assert len(resultado) == 2
+    assert resultado[0].name == "Job Teste 1"
+    mock_repo.list_jobs.assert_called_once()
+
+--- ARQUIVO: ./src/databricks_ops.py ---
+from databricks.sdk import WorkspaceClient
+import os
+from dotenv import load_dotenv
+import json
+import requests
+import pandas as pd
+import subprocess
+from databricks.sdk.service.jobs import JobSettings, Task, NotebookTask, SparkPythonTask
+from pyspark.sql import functions as F
+import sys
+load_dotenv()
+from databricks.connect import DatabricksSession
+import requests
+import os
+import json
+import yaml
+import src.drift as drift
+import os
+import json
+import requests
+from dotenv import load_dotenv
+# =========================
+# WORKSPACE CLIENT (REST API)
+# =========================
+def get_workspace_client():
+    return WorkspaceClient(
+        host=os.getenv("DATABRICKS_HOST"),
+        token=os.getenv("DATABRICKS_TOKEN")
+    )
+
+def get_cluster_id():
+    return os.getenv("DATABRICKS_CLUSTER_ID")
+
+
+
+
+# =========================
+# LAZY LOAD (CORRETO)
+# =========================
+def get_spark():
+    from databricks.connect import DatabricksSession
+    return DatabricksSession.builder.getOrCreate()
+
+
+def get_fe():
+    # ⚠️ só funciona se Databricks Connect estiver OK
+    from databricks.feature_engineering import FeatureEngineeringClient
+    return FeatureEngineeringClient()
+
+
+# =========================
+# LISTAR JOBS
+# =========================
+def listar_jobs():
+    """Lista todos os jobs disponíveis."""
+    w = get_workspace_client()
+    try:
+        lista = []
+
+        for j in w.jobs.list():
+            nome = j.settings.name if j.settings else "Sem nome"
+            lista.append(f"ID: {j.job_id} | Nome: {nome}")
+
+        return "\n".join(lista) if lista else "Nenhum job encontrado."
+
+    except Exception as e:
+        return f"Erro ao listar jobs: {str(e)}"
+
+
+# =========================
+# EXECUTAR JOB
+# =========================
+def executar_job(job_id: int):
+    """Executa um job pelo ID."""
+    try:
+        run = w.jobs.run_now(job_id=job_id)
+        return f"Job {job_id} iniciado com sucesso. Run ID: {run.run_id}"
+
+    except Exception as e:
+        return f"Erro ao executar job: {str(e)}"
+
+
+# =========================
+# CRIAR JOB
+# =========================
+def criar_job(nome: str):
+    """Cria um job simples no Databricks."""
+    try:
+        cluster_id = get_cluster_id()
+
+        if not cluster_id:
+            return "Erro: DATABRICKS_CLUSTER_ID não configurado."
+
+        job = w.jobs.create(
+            name=nome,
+            tasks=[
+                Task(
+                    task_key="task-1",
+                    existing_cluster_id=cluster_id,
+                    notebook_task=NotebookTask(
+                        notebook_path="/Workspace/Users/seu_usuario/exemplo_notebook"
+                    )
+                )
+            ]
+        )
+
+        return f"Job criado com sucesso! ID: {job.job_id}"
+
+    except Exception as e:
+        return f"Erro ao criar job: {str(e)}"
+
+# =========================
+# ATUALIZAR JOB
+# =========================
+
+def atualizar_job(job_id: int, novo_nome: str):
+    """Atualiza o nome de um job."""
+    try:
+        w.jobs.update(
+            job_id=job_id,
+            new_settings=JobSettings(
+                name=novo_nome
+            )
+        )
+
+        return f"Job {job_id} atualizado para '{novo_nome}'"
+
+    except Exception as e:
+        return f"Erro ao atualizar job: {str(e)}"
+
+# =========================
+# DELETAR JOB
+# =========================
+def deletar_job(job_id: int):
+    """Remove um job pelo ID."""
+    try:
+        w.jobs.delete(job_id=job_id)
+        return f"Job {job_id} deletado com sucesso."
+
+    except Exception as e:
+        return f"Erro ao deletar job: {str(e)}"
+    
+
+def calcular_custo(run_id: int):
+    """Consulta o custo via System Tables."""
+    query = f"""
+        SELECT SUM(usage_quantity * list_prices.pricing.default) as custo_estimado
+        FROM system.billing.usage
+        WHERE usage_metadata.job_run_id = '{run_id}'
+        """
+
+    response = w.statement_execution.execute_statement(
+        statement=query,
+        warehouse_id=os.getenv("DATABRICKS_WAREHOUSE_ID")  # ⚠️ obrigatório
+    )
+
+    # 🔥 pegar resultado
+    if response.result and response.result.data_array:
+        custo = float(response.result.data_array[0][0])
+        return f"Custo estimado para o Run {run_id}: ${custo:.4f}"
+
+    return "Custo não disponível ou Run ID inválido."
+
+
+
+
+def criar_dashboard_padrao():
+    load_dotenv()
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        caminho = os.path.join(
+            base_dir,
+            "..",
+            "dashboard",
+            "agent_monitoring_dashboard.lvdash.json"
+        )
+
+        if not os.path.exists(caminho):
+            return "Erro: Arquivo do dashboard não encontrado."
+
+        with open(caminho, "r") as f:
+            conteudo_dashboard = json.load(f)
+
+        # Construção do payload conforme exigido pela documentação da API Lakeview
+        # O campo 'serialized_dashboard' precisa ser uma string JSON, 
+        # por isso usamos json.dumps() no objeto carregado.
+        payload = {
+            "display_name": "Agent Monitoring Dashboard",
+            "warehouse_id": os.getenv("DATABRICKS_WAREHOUSE_ID"),
+            "serialized_dashboard": json.dumps(conteudo_dashboard)           
+        }
+
+        url = f"{os.getenv('DATABRICKS_HOST')}/api/2.0/lakeview/dashboards"
+
+        headers = {
+            "Authorization": f"Bearer {os.getenv('DATABRICKS_TOKEN')}",
+            "Content-Type": "application/json"
+        }
+
+        response = requests.post(url, headers=headers, json=payload)
+
+        if response.status_code != 200:
+            return f"Erro na API ({response.status_code}): {response.text}"
+
+        data = response.json()
+        return f"Dashboard criado! ID: {data.get('dashboard_id')}"
+
+    except Exception as e:
+        return f"Erro inesperado: {str(e)}"
+
+def listar_modelos():
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    models_dir = os.path.join(base_dir, "..", "models")
+
+    arquivos = [
+        f for f in os.listdir(models_dir)
+        if f.endswith(".py")
+    ]
+
+    return arquivos
+from databricks.sdk.service.workspace import ImportFormat
+
+
+def upload_modelo(nome_arquivo: str):
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        local_path = os.path.join(base_dir, "..", "models", nome_arquivo)
+
+        workspace_folder = "/Users/fabio.jdluz@gmail.com/models" # Criei uma pasta models dentro do seu usuário para organizar
+        workspace_path = f"{workspace_folder}/{nome_arquivo}"
+
+        # 1. Cria a pasta
+        w.workspace.mkdirs(path=workspace_folder)
+
+        # 2. Upload com formato FORÇADO para SOURCE (Script Python)
+        with open(local_path, "rb") as f:
+            w.workspace.upload(
+                path=workspace_path,
+                content=f,
+                overwrite=True,
+                 format=ImportFormat.AUTO # Isso diz ao Databricks: "trate como código fonte"
+            )
+
+        return workspace_path
+
+    except Exception as e:
+        return f"Erro ao subir modelo: {str(e)}"
+
+    except Exception as e:
+        return f"Erro ao subir modelo: {str(e)}"
+
+def criar_job_modelo(nome_arquivo: str, workspace_path: str):
+    cluster_id = os.getenv("DATABRICKS_CLUSTER_ID")
+
+    # O Spark entende caminhos absolutos do Workspace corretamente aqui
+    job = w.jobs.create(
+        name=f"Job - {nome_arquivo}",
+        tasks=[
+            Task(
+                task_key="model",
+                existing_cluster_id=cluster_id,
+                spark_python_task=SparkPythonTask(
+                    python_file=workspace_path
+                )
+            )
+        ]
+    )
+    return job.job_id
+
+def deploy_modelo(nome_arquivo: str):
+    try:
+        workspace_path = upload_modelo(nome_arquivo)
+        
+        if isinstance(workspace_path, str) and "Erro" in workspace_path:
+            return workspace_path
+
+        job_id = criar_job_modelo(nome_arquivo, workspace_path)
+
+        return f"✅ Modelo enviado para: {workspace_path}\n🚀 Job criado! ID: {job_id}"
+
+    except Exception as e:
+        return f"Erro no deploy: {str(e)}"
+
+
+
+def bundle_job_yaml():
+    """
+    Faz deploy do job YAML direto via REST API (sem conversão manual)
+    """
+
+    import os
+    import yaml
+    import requests
+    from dotenv import load_dotenv
+
+    load_dotenv()
+
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+
+        yaml_path = os.path.join(base_dir, "..", "models", "job_model.yaml")
+
+        if not os.path.exists(yaml_path):
+            return f"❌ YAML não encontrado: {yaml_path}"
+
+        # =========================
+        # LER YAML
+        # =========================
+        with open(yaml_path, "r") as f:
+            config = yaml.safe_load(f)
+
+        jobs = config["resources"]["jobs"]
+        job_key = list(jobs.keys())[0]
+        job_cfg = jobs[job_key]
+
+        # =========================
+        # CHAMAR API DIRETA
+        # =========================
+        url = f"{os.getenv('DATABRICKS_HOST')}/api/2.1/jobs/create"
+
+        headers = {
+            "Authorization": f"Bearer {os.getenv('DATABRICKS_TOKEN')}",
+            "Content-Type": "application/json"
+        }
+
+        response = requests.post(
+            url,
+            headers=headers,
+            json=job_cfg   # 🔥 manda direto o YAML convertido
+        )
+
+        if response.status_code != 200:
+            return {
+                "status": "error",
+                "message": response.text
+            }
+
+        data = response.json()
+
+        return {
+            "status": "success",
+            "job_id": data.get("job_id"),
+            "job_name": job_cfg["name"]
+        }
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+import os
+import pandas as pd
+from pyspark.sql import functions as F
+
+def executar_pipeline_csv_para_feature_store():
+    """
+    Pipeline fixo:
+    CSV local → Spark DataFrame → Delta Table → Feature Store (ou fallback Delta)
+    """
+
+    try:
+        # =========================
+        # Spark session
+        # =========================
+        from databricks.connect import DatabricksSession
+        from databricks.feature_engineering import FeatureEngineeringClient
+
+        spark = DatabricksSession.builder.getOrCreate()
+
+        try:
+            fe = FeatureEngineeringClient()
+        except:
+            fe = None  # fallback se Feature Store não estiver disponível
+
+        # =========================
+        # CONFIG FIXA
+        # =========================
+        catalog = "pedido"
+        schema = "default"
+        table = "cliente"
+        feature_table = "cliente_features"
+
+        base_table = f"{catalog}.{schema}.{table}"
+        feature_table_name = f"{catalog}.{schema}.{feature_table}"
+
+        # =========================
+        # CSV FIXO
+        # =========================
+        csv_path = (
+            "/Users/fabiojuliodaluz/Documents/GitHub/mcp-server/"
+            "arquitetura_de_dados/data/BancoDeDados.csv"
+        )
+
+        if not os.path.exists(csv_path):
+            return f"CSV não encontrado: {csv_path}"
+
+        # =========================
+        # LOAD CSV
+        # =========================
+        df_pd = pd.read_csv(csv_path)
+        df = spark.createDataFrame(df_pd)
+
+        # =========================
+        # CRIA SCHEMA
+        # =========================
+        spark.sql(f"CREATE SCHEMA IF NOT EXISTS {catalog}.{schema}")
+
+        # =========================
+        # SALVA TABELA BASE
+        # =========================
+        df.write.format("delta").mode("overwrite").saveAsTable(base_table)
+
+        # =========================
+        # FEATURES
+        # =========================
+        df_features = df.groupBy("id_unico_cliente").agg(
+            F.count("*").alias("total_registros"),
+            F.avg("preco").alias("ticket_medio"),
+            F.sum("preco").alias("valor_total")
+        )
+
+        # =========================
+        # FEATURE STORE (ou fallback)
+        # =========================
+        if fe:
+            try:
+                fe.create_table(
+                    name=feature_table_name,
+                    primary_keys=["id_unico_cliente"],
+                    df=df_features
+                )
+            except:
+                df_features.write.format("delta").mode("overwrite").saveAsTable(feature_table_name)
+        else:
+            df_features.write.format("delta").mode("overwrite").saveAsTable(feature_table_name)
+
+        return {
+            "status": "success",
+            "base_table": base_table,
+            "feature_table": feature_table_name
+        }
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+def show_drift():
+
+    return drift.run_drift()
+
+--- ARQUIVO: ./src/drift.py ---
+import numpy as np
+from scipy.stats import ks_2samp, chi2_contingency
+from databricks.connect import DatabricksSession
+
+
+def run_drift():
+    """
+    Calcula drift simples em uma tabela do Databricks Lake
+    e retorna um único resultado consolidado.
+    """
+
+    spark = DatabricksSession.builder.getOrCreate()
+
+    df = spark.table("pedido.default.cliente").sample(0.05).toPandas()
+
+    # =========================
+    # DRIFT NUMÉRICO (KS)
+    # =========================
+    sample = df["preco"].sample(frac=0.5, random_state=42)
+    rest = df["preco"].drop(sample.index)
+
+    ks_stat, ks_p = ks_2samp(sample, rest)
+
+    # =========================
+    # DRIFT CATEGÓRICO (CHI2)
+    # =========================
+    s1 = df["status_pedido"].sample(frac=0.5, random_state=42)
+    s2 = df["status_pedido"].drop(s1.index)
+
+    c1 = s1.value_counts()
+    c2 = s2.value_counts()
+
+    cats = set(c1.index).union(set(c2.index))
+
+    v1 = [c1.get(x, 0) for x in cats]
+    v2 = [c2.get(x, 0) for x in cats]
+
+    chi2, chi_p, _, _ = chi2_contingency([v1, v2])
+
+    # =========================
+    # PSI SIMPLES
+    # =========================
+    expected = df["preco"].sample(frac=0.5, random_state=42)
+    actual = df["preco"].drop(expected.index)
+
+    e = expected.value_counts(normalize=True)
+    a = actual.value_counts(normalize=True)
+
+    all_keys = set(e.index).union(set(a.index))
+
+    psi = sum(
+        (a.get(k, 0.0001) - e.get(k, 0.0001)) *
+        np.log(a.get(k, 0.0001) / e.get(k, 0.0001))
+        for k in all_keys
+    )
+
+    # =========================
+    # RESULTADO ÚNICO
+    # =========================
+    return {
+        "drift_preco_ks": {
+            "statistic": float(ks_stat),
+            "p_value": float(ks_p),
+            "drift": bool(ks_p < 0.05)
+        },
+        "drift_status_chi2": {
+            "statistic": float(chi2),
+            "p_value": float(chi_p),
+            "drift": bool(chi_p < 0.05)
+        },
+        "psi_preco": float(psi),
+        "overall_drift": bool(ks_p < 0.05 or chi_p < 0.05 or psi > 0.2)
+    }
+
+--- ARQUIVO: ./src/mcp_server.py ---
+from mcp.server.fastmcp import FastMCP
+import logging
+import sys
+import databricks_ops as db  # O seu único arquivo de lógica
+
+# Configuração de log para visibilidade no seu terminal
+logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+logger = logging.getLogger("LogisticaAnalyticsServer")
+
+mcp = FastMCP("LogisticaAnalyticsServer")
+
+
+@mcp.tool()
+def criar_dashboard_databricks() -> str:
+    """Cria um dashboard no Databricks a partir de um JSON."""
+    return db.criar_dashboard_padrao()
+
+@mcp.tool()
+def listar_jobs_databricks() -> str:
+    """Lista os jobs disponíveis no Databricks."""
+    logger.info("Ferramenta 'listar_jobs_databricks' chamada.")
+    return db.listar_jobs()
+
+@mcp.tool()
+def executar_job_databricks(job_id: int) -> str:
+    """Executa um job do Databricks pelo ID."""
+    logger.info(f"Executando job ID: {job_id}")
+    return db.executar_job(job_id)
+
+@mcp.tool()
+def verificar_custo_job(run_id: int) -> str:
+    """Consulta o custo de uma execução (run) específica."""
+    logger.info(f"Consultando custo para o run: {run_id}")
+    return db.calcular_custo(run_id)
+
+
+
+@mcp.tool()
+def deploy_modelo_databricks(nome_modelo: str) -> str:
+    """
+    Faz deploy de um modelo Python da pasta models no Databricks.
+    """
+    return db.deploy_modelo(nome_modelo)
+
+
+
+
+@mcp.tool()
+def bundle_job_yaml() -> str:
+    """Cria bundle yaml"""
+    return db.bundle_job_yaml
+
+
+
+@mcp.tool()
+def pipeline_databricks(nome_arquivo: str, tabela: str, feature_table: str) -> str:
+    """
+    Pipeline completo: CSV → Delta → Feature Store
+    """
+    return db.pipeline_csv_para_feature_store(nome_arquivo, tabela, feature_table)
+
+
+@mcp.tool()
+def show_drift():
+    db.run_drift_single_table()
+
+
+if __name__ == "__main__":
+    logger.info("Iniciando servidor MCP...")
+    mcp.run()
+
+
+
+
+--- ARQUIVO: ./src/application/ports/job_repository.py ---
+from abc import ABC, abstractmethod
+from typing import List
+from src.domain.entities.job import DatabricksJob # Criaremos essa classe a seguir
+
+class JobRepositoryPort(ABC):
+    @abstractmethod
+    def list_jobs(self) -> List[DatabricksJob]:
+        pass
+
+    @abstractmethod
+    def delete_job(self, job_id: int) -> bool:
+        pass
+
+--- ARQUIVO: ./src/application/ports/llm_provider.py ---
+from abc import ABC, abstractmethod
+
+class LLMProviderPort(ABC):
+    @abstractmethod
+    def invoke(self, messages: list, tools: list):
+        """Interface padrão que qualquer LLM (OpenAI, Anthropic, Gemini) deve seguir."""
+        pass
+
+--- ARQUIVO: ./src/application/services/agent_service.py ---
+from langchain_core.messages import HumanMessage
+from src.application.ports.llm_provider import LLMProviderPort
+from src.infrastructure.tools.registry import tools
+
+class AgentService:
+    def __init__(self, llm_provider: LLMProviderPort):
+        self.llm_provider = llm_provider
+
+    def process_message(self, prompt: str):
+        # O serviço não sabe se é OpenAI ou outro, apenas que segue o contrato
+        response = self.llm_provider.invoke([HumanMessage(content=prompt)], tools)
+        
+        if response.tool_calls:
+            results = []
+            for call in response.tool_calls:
+                name = call["name"]
+                if name in tools:
+                    # Executa a tool do registro
+                    results.append(str(tools[name].invoke(call.get("args", {}))))
+            return "\n".join(results)
+        return response.content
+
+--- ARQUIVO: ./src/infrastructure/tools/registry.py ---
+from langchain_core.tools import tool
+from src.infrastructure.repositories.databricks_job_repository import DatabricksJobRepository
+import os
+
+db = DatabricksJobRepository()
+
+@tool
+def listar_jobs_databricks() -> str:
+    """Lista jobs no Databricks"""
+    return db.listar_jobs()
+
+@tool
+def executar_job_databricks(job_id: int) -> str:
+    """Executa job no Databricks"""
+    return db.executar_job(job_id)
+
+@tool
+def criar_job_databricks(nome: str) -> str:
+    """Cria job no Databricks"""
+    return db.criar_job(nome)
+
+@tool
+def atualizar_job_databricks(job_id: int, novo_nome: str) -> str:
+    """Atualiza job no Databricks"""
+    return db.atualizar_job(job_id, novo_nome)
+
+@tool
+def deletar_job_databricks(job_id: int) -> str:
+    """Deleta job no Databricks"""
+    return db.deletar_job(job_id)
+
+@tool
+def criar_dashboard_databricks() -> str:
+    """Cria dashboard no Databricks"""
+    return db.criar_dashboard_padrao()
+
+@tool
+def show_drift() -> str:
+    """Mostra os drifts"""
+    return db.show_drift()
+
+
+@tool
+def bundle_job_yaml() -> str:
+    """Cria bundle yaml"""
+    return db.bundle_job_yaml()
+
+@tool
+def pipeline_databricks() -> str:
+    """
+    Pipeline completo: CSV → Delta → Feature Store
+    """
+    return db.executar_pipeline_csv_para_feature_store()
+
+@tool
+def deploy_modelo_databricks(nome_modelo: str) -> str:
+    """Faz deploy de modelo Python"""
+    return db.deploy_modelo(nome_modelo)
+
+@tool
+def listar_modelos() -> str:
+    """Lista modelos locais"""
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    models_dir = os.path.join(base_dir, "..", "models")
+
+    return "\n".join([
+        f for f in os.listdir(models_dir)
+        if f.endswith(".py")
+    ])
+
+
+# =========================
+# TOOL REGISTRY (IMPORTANTE)
+# =========================
+tools = {
+    "listar_jobs_databricks": listar_jobs_databricks,
+    "executar_job_databricks": executar_job_databricks,
+    "criar_job_databricks": criar_job_databricks,
+    "atualizar_job_databricks": atualizar_job_databricks,
+    "deletar_job_databricks": deletar_job_databricks,
+    "criar_dashboard_databricks": criar_dashboard_databricks,
+    "deploy_modelo_databricks": deploy_modelo_databricks,
+    "listar_modelos": listar_modelos,
+    "pipeline_databricks":pipeline_databricks,
+    "bundle_job_yaml": bundle_job_yaml,
+    "show_drift": show_drift
+}
+
+--- ARQUIVO: ./src/infrastructure/config/settings.py ---
+import os
+from dotenv import load_dotenv, find_dotenv
+
+# Carrega o .env da raiz automaticamente
+load_dotenv(find_dotenv())
+
+class Settings:
+    @property
+    def openai_api_key(self) -> str:
+        return self._get_env("OPENAI_API_KEY")
+
+    @property
+    def databricks_host(self) -> str:
+        return self._get_env("DATABRICKS_HOST")
+
+    @property
+    def databricks_token(self) -> str:
+        return self._get_env("DATABRICKS_TOKEN")
+
+    def _get_env(self, key: str) -> str:
+        value = os.getenv(key)
+        if not value:
+            raise ValueError(f"Variável {key} não encontrada no .env!")
+        return value
+
+settings = Settings()
+
+--- ARQUIVO: ./src/infrastructure/repositories/databricks_job_repository.py ---
+from typing import List
+
+from databricks.sdk import WorkspaceClient
+from src.domain.entities.job import DatabricksJob
+from src.application.ports.job_repository import JobRepositoryPort
+import os
+import logging
+
+
+# Configura um logger para avisar que algo falhou sem travar o app
+logger = logging.getLogger(__name__)
+
+class DatabricksJobRepository(JobRepositoryPort):
+    def __init__(self):
+        # Apenas guardamos a configuração, não instanciamos o cliente ainda
+        self.host = os.getenv("DATABRICKS_HOST")
+        self.token = os.getenv("DATABRICKS_TOKEN")
+        self._client = None
+
+    @property
+    def client(self):
+        """Getter que cria o cliente apenas quando necessário."""
+        if self._client is None:
+            if not self.host or not self.token:
+                logger.warning("Credenciais do Databricks não encontradas!")
+                raise ConnectionError("DATABRICKS_HOST ou TOKEN não configurados.")
+            
+            try:
+                self._client = WorkspaceClient(host=self.host, token=self.token)
+            except Exception as e:
+                logger.error(f"Erro ao inicializar cliente Databricks: {e}")
+                raise
+        return self._client
+    
+
+    # No seu DatabricksJobRepository
+    def list_jobs(self) -> List[DatabricksJob]:
+        sdk_jobs = self.client.jobs.list()
+        # Tradução: SDK -> Entidade de Domínio
+        return [DatabricksJob(job_id=j.job_id, name=j.settings.name) for j in sdk_jobs]
+
+ 
+
+    def delete_job(self, job_id: int) -> bool:
+        try:
+            self.client.jobs.delete(job_id=job_id)
+            return True
+        except Exception as e:
+            logger.error(f"Falha ao deletar job {job_id}: {e}")
+            return False
+
+--- ARQUIVO: ./src/infrastructure/llm_gateways/openai_gateway.py ---
+from langchain_openai import ChatOpenAI
+from src.application.ports.llm_provider import LLMProviderPort
+
+class OpenAIGateway(LLMProviderPort):
+ 
+    def __init__(self, api_key: str, model="gpt-4o-mini"):
+        if not api_key:
+            raise ValueError("API Key é obrigatória para o OpenAIGateway")
+        self.llm = ChatOpenAI(model=model, temperature=0, api_key=api_key)
+
+    def invoke(self, messages, tools):
+        llm_with_tools = self.llm.bind_tools(list(tools.values()))
+        return llm_with_tools.invoke(messages)
+
+--- ARQUIVO: ./src/infrastructure/llm_gateways/ollama_gateway.py ---
+# src/infrastructure/llm_gateways/ollama_gateway.py
+from langchain_ollama import ChatOllama
+from src.application.ports.llm_provider import LLMProviderPort
+
+class OllamaGateway(LLMProviderPort):  # Verifique se o nome está idêntico aqui
+    def __init__(self, model="qwen2.5-coder:7b"):
+        self.llm = ChatOllama(
+            model=model,
+            temperature=0,
+            base_url="http://localhost:11434"
+        )
+
+    def invoke(self, messages, tools):
+        # Conversão de dicionário para lista se necessário
+        list_of_tools = list(tools.values()) if isinstance(tools, dict) else tools
+        llm_with_tools = self.llm.bind_tools(list_of_tools)
+        return llm_with_tools.invoke(messages)
+
+--- ARQUIVO: ./src/domain/repositories/job_repository.py ---
+from abc import ABC, abstractmethod
+from typing import List
+from ..entities.job import DatabricksJob
+
+class JobRepositoryPort(ABC):
+    @abstractmethod
+    def list_jobs(self) -> List[DatabricksJob]:
+        pass
+
+    @abstractmethod
+    def delete_job(self, job_id: int) -> bool:
+        pass
+
+--- ARQUIVO: ./src/domain/use_cases/list_job_use_case.py ---
+from typing import List
+from src.domain.entities.job import DatabricksJob
+from src.domain.repositories.job_repository import JobRepositoryPort
+
+class ListJobsUseCase:
+    def __init__(self, repository: JobRepositoryPort):
+        # O Use Case só conhece o contrato, não a implementação real (Databricks)
+        self.repository = repository
+
+    def execute(self) -> List[DatabricksJob]:
+        """
+        Executa a regra de negócio para listar jobs.
+        Aqui você poderia adicionar filtros, ordenação ou logs.
+        """
+        try:
+            # Chama o repositório através da porta (interface)
+            jobs = self.repository.list_jobs()
+            
+            # Exemplo de regra de negócio: 
+            # Garantir que jobs vazios sejam filtrados antes de chegar na UI
+            return [j for j in jobs if j.name != "Sem nome"]
+            
+        except Exception as e:
+            # O Use Case gerencia o erro de negócio, não o erro técnico da API
+            raise Exception(f"Erro ao processar caso de uso de listagem: {str(e)}")
+
+--- ARQUIVO: ./src/domain/entities/job.py ---
+from dataclasses import dataclass
+
+@dataclass
+class DatabricksJob:
+    job_id: int
+    name: str
+    status: str = "unknown"
+
+--- ARQUIVO: ./src/interfaces/streamlit_app/main.py ---
+import streamlit as st
+from src.application.services.agent_service import AgentService
+from src.infrastructure.llm_gateways.openai_gateway import OpenAIGateway
+
+from src.infrastructure.config.settings import settings
+
+# Inicializa o serviço (maestro)
+if "agent" not in st.session_state:
+    gateway = OpenAIGateway(api_key=settings.openai_api_key)
+    st.session_state.agent = AgentService(llm_provider=gateway)
+
+st.set_page_config(page_title="Databricks Assistant", page_icon="🤖")
+st.title("🤖 Assistente Databricks")
+
+# Histórico
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
+
+# Input do usuário
+if prompt := st.chat_input("Pergunte algo..."):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    with st.chat_message("assistant"):
+        # A lógica está encapsulada no serviço
+        try:
+            resposta = st.session_state.agent.process_message(prompt)
+            st.markdown(resposta)
+            st.session_state.messages.append({"role": "assistant", "content": resposta})
+        except Exception as e:
+            st.error(f"Erro no processamento: {str(e)}")
