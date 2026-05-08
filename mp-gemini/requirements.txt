@@ -33,3 +33,4 @@ kubernetes==35.0.0
 
 scipy==1.16.0
 azure-devops
+langchain-ollama
