@@ -14,16 +14,24 @@ import requests
 import os
 import json
 import yaml
-import drift as drift
+import src.drift as drift
+import os
+import json
+import requests
+from dotenv import load_dotenv
 # =========================
 # WORKSPACE CLIENT (REST API)
 # =========================
-w = WorkspaceClient(
-    host=os.getenv("DATABRICKS_HOST"),
-    token=os.getenv("DATABRICKS_TOKEN")
-)
+def get_workspace_client():
+    return WorkspaceClient(
+        host=os.getenv("DATABRICKS_HOST"),
+        token=os.getenv("DATABRICKS_TOKEN")
+    )
 
-cluster_id = os.getenv("DATABRICKS_CLUSTER_ID")
+def get_cluster_id():
+    return os.getenv("DATABRICKS_CLUSTER_ID")
+
+
 
 
 # =========================
@@ -45,6 +53,7 @@ def get_fe():
 # =========================
 def listar_jobs():
     """Lista todos os jobs disponíveis."""
+    w = get_workspace_client()
     try:
         lista = []
 
@@ -77,7 +86,7 @@ def executar_job(job_id: int):
 def criar_job(nome: str):
     """Cria um job simples no Databricks."""
     try:
-        cluster_id = os.getenv("DATABRICKS_CLUSTER_ID")
+        cluster_id = get_cluster_id()
 
         if not cluster_id:
             return "Erro: DATABRICKS_CLUSTER_ID não configurado."
@@ -153,10 +162,7 @@ def calcular_custo(run_id: int):
     return "Custo não disponível ou Run ID inválido."
 
 
-import os
-import json
-import requests
-from dotenv import load_dotenv
+
 
 def criar_dashboard_padrao():
     load_dotenv()

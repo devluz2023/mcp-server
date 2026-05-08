@@ -2,7 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+mcp-gemini-clean
 # C extensions
 *.so
 # Arquivos de chave pública

@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram name="Solução Completa MCP Server" id="solucao-001">
-        <mxGraphModel dx="1080" dy="849" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
+        <mxGraphModel dx="906" dy="265" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -203,7 +203,7 @@
         </mxGraphModel>
     </diagram>
     <diagram id="cloud_azure" name="☁️ Arquitetura Cloud Azure">
-        <mxGraphModel dx="1080" dy="849" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+        <mxGraphModel dx="1386" dy="725" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -427,7 +427,7 @@
         </mxGraphModel>
     </diagram>
     <diagram id="data_arch" name="💾 Arquitetura de Dados">
-        <mxGraphModel dx="1080" dy="849" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+        <mxGraphModel dx="906" dy="265" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -615,7 +615,7 @@
         </mxGraphModel>
     </diagram>
     <diagram id="ml_design" name="🤖 Design Machine Learning">
-        <mxGraphModel dx="1080" dy="849" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+        <mxGraphModel dx="906" dy="265" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -626,7 +626,7 @@
                     <mxGeometry x="40" y="80" width="1320" height="780" as="geometry"/>
                 </mxCell>
                 <mxCell id="ml_label" value="Pipeline de Machine Learning" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;color=#7b1fa2" parent="1" vertex="1">
-                    <mxGeometry x="60" y="90" width="220" height="25" as="geometry"/>
+                    <mxGeometry x="150" y="100" width="220" height="25" as="geometry"/>
                 </mxCell>
                 <mxCell id="prep_title" value="📊 Preparação de Dados" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;color=#1565c0" parent="1" vertex="1">
                     <mxGeometry x="60" y="140" width="180" height="25" as="geometry"/>
