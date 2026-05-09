@@ -1,7 +1,9 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.0
+    rev: v0.4.4  # Versão do Ruff
     hooks:
+      # Este gancho limpa imports não usados e organiza a ordem deles
       - id: ruff
         args: [ --fix ]
+      # Este gancho cuida da indentação e formatação visual (estilo Black)
       - id: ruff-format
