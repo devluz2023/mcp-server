@@ -57,3 +57,10 @@ resource "databricks_cluster" "ml_cluster" {
   data_security_mode = "SINGLE_USER"
   single_user_name   = "fabio.jdluz@gmail.com"
 }
+
+# Cria o token
+resource "databricks_token" "pat_token" {
+  comment          = "Token gerado via Terraform para automação"
+  lifetime_seconds = 3600 # 1 hora (0 para infinito, mas não recomendado)
+}
+
