@@ -36,3 +36,4 @@ azure-devops
 langchain-ollama
 ruff
 black
+pre-commit
