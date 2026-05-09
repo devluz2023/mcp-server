@@ -21,14 +21,19 @@ st.markdown(
     **Comandos Git/DevOps disponíveis:**
     - listar_repositorios
     - commit_e_push_arquivo
+    - versionar_arquivo
+    - versionar_arquivo_models
     - listar_prs
     - aprovar_pr
     - merge_pr
+    - criar_branch
     - criar_repositorio_gitflow
 
     Use frases como:
     - "listar repositórios"
-    - "commitar e dar push de arquivo no repositório X"
+    - "versionar o arquivo models/meu_arquivo.py no repositório X branch feature/teste"
+    - "commitar e dar push de arquivo models/meu_arquivo.py no repositório X branch feature/teste"
+    - "criar branch feature/teste no repositório X a partir da main"
     - "listar PRs do repositório X"
     - "aprovar PR 123"
     - "mergear PR 123"

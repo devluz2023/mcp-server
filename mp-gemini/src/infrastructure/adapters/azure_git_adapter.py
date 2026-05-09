@@ -112,29 +112,48 @@ class AzureGitAdapter(GitServicePort):
                 else "0000000000000000000000000000000000000000"
             )
 
-            push = {
-                "commits": [
-                    {
-                        "comment": f"Upload de {path} via Clean Architecture",
-                        "changes": [
+            for change_type in ["add", "edit"]:
+                try:
+                    push = {
+                        "commits": [
                             {
-                                "changeType": "add",  # Pode ser edit se o arquivo já existir
-                                "item": {"path": f"/{path}"},
-                                "newContent": {
-                                    "content": content,
-                                    "contentType": "rawText",
-                                },
+                                "comment": f"Upload de {path} via Clean Architecture",
+                                "changes": [
+                                    {
+                                        "changeType": change_type,
+                                        "item": {"path": f"/{path}"},
+                                        "newContent": {
+                                            "content": content,
+                                            "contentType": "rawText",
+                                        },
+                                    }
+                                ],
+                            }
+                        ],
+                        "refUpdates": [
+                            {
+                                "name": f"refs/heads/{branch}",
+                                "oldObjectId": old_object_id,
                             }
                         ],
                     }
-                ],
-                "refUpdates": [
-                    {"name": f"refs/heads/{branch}", "oldObjectId": old_object_id}
-                ],
-            }
 
-            self.client.create_push(push, repository_id=repo_id, project=self.project)
-            return True
+                    self.client.create_push(
+                        push, repository_id=repo_id, project=self.project
+                    )
+                    return True
+                except Exception as inner_e:
+                    if change_type == "add":
+                        logger.warning(
+                            "Falha no commit add de %s: %s. Tentando edit.",
+                            path,
+                            inner_e,
+                        )
+                        continue
+                    logger.error(f"Falha no commit do arquivo {path}: {inner_e}")
+                    return False
+
+            return False
         except Exception as e:
             logger.error(f"Falha no commit: {e}")
             return False

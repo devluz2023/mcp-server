@@ -99,11 +99,43 @@ def listar_repositorios() -> str:
 def commit_e_push_arquivo(
     repo_name: str, arquivo: str, conteudo: str, branch: str = "main"
 ) -> str:
-    """Faz commit e push de um arquivo para o repositório especificado."""
+    """Faz commit e push de um arquivo para o repositório especificado.
+
+    O caminho do arquivo pode incluir pastas, por exemplo: 'modelo/meu_arquivo.py'.
+    """
     success = git_use_case.commit_and_push(repo_name, arquivo, conteudo, branch)
     if not success:
         return f"Falha ao commitar/push no repositório '{repo_name}' branch '{branch}'."
     return f"Commit e push realizados com sucesso em '{repo_name}' branch '{branch}'."
+
+
+@tool
+def versionar_arquivo(
+    repo_name: str, caminho: str, conteudo: str, branch: str = "main"
+) -> str:
+    """Versiona um arquivo em uma pasta do repositório."""
+    success = git_use_case.commit_and_push(repo_name, caminho, conteudo, branch)
+    if not success:
+        return (
+            f"Falha ao versionar o arquivo '{caminho}' no repositório '{repo_name}' "
+            f"branch '{branch}'."
+        )
+    return f"Arquivo '{caminho}' versionado e enviado com sucesso em '{repo_name}' branch '{branch}'."
+
+
+@tool
+def versionar_arquivo_models(
+    repo_name: str, filename: str, conteudo: str, branch: str = "main"
+) -> str:
+    """Versiona um arquivo dentro da pasta models em um branch especificado."""
+    caminho = filename if filename.startswith("models/") else f"models/{filename}"
+    success = git_use_case.commit_and_push(repo_name, caminho, conteudo, branch)
+    if not success:
+        return (
+            f"Falha ao versionar o arquivo '{caminho}' no repositório '{repo_name}' "
+            f"branch '{branch}'."
+        )
+    return f"Arquivo '{caminho}' versionado e enviado com sucesso em '{repo_name}' branch '{branch}'."
 
 
 @tool
@@ -152,6 +184,24 @@ def merge_pr(repo_name: str, pr_id: int) -> str:
 
 
 @tool
+def criar_branch(
+    repo_name: str,
+    branch_name: str,
+    source_branch: str = "main",
+) -> str:
+    """Cria uma nova branch a partir de uma branch base."""
+    try:
+        created = git_use_case.create_branch(repo_name, branch_name, source_branch)
+    except ValueError as exc:
+        return str(exc)
+    return (
+        f"Branch '{branch_name}' criada com sucesso em '{repo_name}' a partir de '{source_branch}'."
+        if created
+        else f"Falha ao criar branch '{branch_name}' em '{repo_name}'."
+    )
+
+
+@tool
 def criar_repositorio_gitflow(
     repo_name: str,
     initial_file: str = "README.md",
@@ -195,8 +245,11 @@ tools = {
     "show_drift": show_drift,
     "listar_repositorios": listar_repositorios,
     "commit_e_push_arquivo": commit_e_push_arquivo,
+    "versionar_arquivo": versionar_arquivo,
     "listar_prs": listar_prs,
     "aprovar_pr": aprovar_pr,
     "merge_pr": merge_pr,
+    "versionar_arquivo_models": versionar_arquivo_models,
+    "criar_branch": criar_branch,
     "criar_repositorio_gitflow": criar_repositorio_gitflow,
 }

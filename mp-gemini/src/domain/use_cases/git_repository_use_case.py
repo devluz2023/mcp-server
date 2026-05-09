@@ -37,3 +37,16 @@ class GitRepositoryUseCase:
         if not repo:
             raise ValueError(f"Repositório '{repo_name}' não encontrado.")
         return self.git_service.merge_pr(repo.id, pr_id)
+
+    def create_branch(
+        self,
+        repo_name: str,
+        branch_name: str,
+        source_branch: str = "main",
+    ) -> bool:
+        repo = self.get_repository(repo_name)
+        if not repo:
+            raise ValueError(f"Repositório '{repo_name}' não encontrado.")
+        return self.git_service.create_branch(
+            repo_id=repo.id, branch_name=branch_name, source_branch=source_branch
+        )
