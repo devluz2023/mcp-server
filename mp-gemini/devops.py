@@ -32,7 +32,7 @@ def obter_meu_id(connection):
 
 
 # --- 2. ANÁLISE E VOTO ---
-def aprovar_pull_request(git_client, pr, meu_id):
+  def aprovar_pull_request(git_client, pr, meu_id):
     """Vota 10 (Approved) usando o ID validado pelo sistema"""
     project = os.getenv("PROJECT_NAME")
     repo_id = os.getenv("REPOSITORY_NAME")
