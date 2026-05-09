@@ -1,13 +1,16 @@
 import streamlit as st
 from src.application.services.agent_service import AgentService
 from src.infrastructure.llm_gateways.openai_gateway import OpenAIGateway
-
+from src.infrastructure.adapters.azure_git_adapter import AzureGitAdapter
+from src.domain.use_cases.setup_devops_environment import   SetupDevOpsEnvironment
 from src.infrastructure.config.settings import settings
 
 # Inicializa o serviço (maestro)
 if "agent" not in st.session_state:
     gateway = OpenAIGateway(api_key=settings.openai_api_key)
     st.session_state.agent = AgentService(llm_provider=gateway)
+    azure_adapter = AzureGitAdapter()
+    devops_use_case = SetupDevOpsEnvironment(git_service=azure_adapter)
 
 st.set_page_config(page_title="Databricks Assistant", page_icon="🤖")
 st.title("🤖 Assistente Databricks")
