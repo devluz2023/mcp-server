@@ -133,65 +133,7 @@ for atracao in atracoes:
 
 mapa
 
-"""## Modelagem em Programação Linear para Solução
 
-**Conjuntos:**
-
-- $pontos\_turisticos$: Conjunto de pontos turísticos que vão indexar as variáveis de decisão, restrições e função objetivo.
-
-**Parâmetros:**
-
-- $tempo\_maximo$: O tempo máximo disponível para a visita (em horas).
-- $num\_min\_atracoes$: O número mínimo de atrações que você deseja visitar (um valor ajustável).
-
-- $tempo\_recomendado[ponto]$: O tempo recomendado da visita de cada ponto turístico (em horas).
-- $custo\_entrada[ponto]$: O custo de entrada da visita de cada ponto turístico.
-
-**Variáveis de Decisão:**
-
-- $visitas[ponto]$: Variável binária que indica se você visitará a atração $ponto$ (0 para não visitar, 1 para visitar).
-
-**Função Objetivo:**
-
-A função objetivo tem como objetivo minimizar o custo total da viagem e é definida da seguinte forma:
-
-$
-\mbox{min} \displaystyle \sum_{ponto \in atracoes} custo\_entrada\_atracoes[ponto] \cdot visitas[ponto]
-$
-
-Essa função considera o custo de entrada em cada atração multiplicado pela variável binária que indica se a atração é visitada ou não.
-
-**Restrições:**
-
-1. **Número Mínimo de Visitas:**
-
-$
-\displaystyle \sum_{ponto \in atracoes} visitas[ponto] \geq num\_min\_atracoes
-$
-
-Essa restrição garante que você deve visitar um número mínimo de atrações especificado.
-
-2. **Restrição de Tempo:**
-
-$
-\displaystyle \sum_{ponto \in atracoes} tempo\_recomendado\_atracoes[ponto] \cdot visitas[ponto] \leq tempo\_maximo
-$
-
-Essa restrição limita o tempo total gasto nas visitas, incluindo o tempo recomendado para cada atração multiplicado pela variável binária que indica se a atração é visitada ou não.
-
-## Implementação e Resolução com Programação Linear
-
-Resolvido a definição do problema, podemos partir para a resolução. Para isso, utilizaremos um modelo de programação linear. Esse tipo de modelo é adequado para problemas em que temos que tomar decisões, considerando restrições.
-
-No nosso caso, temos que decidir quais atrações visitar, considerando o orçamento e o tempo disponíveis.O modelo de programação linear nos permitirá encontrar a solução ótima para esse problema.
-
-Para implementar o modelo, utilizaremos a biblioteca Pyomo com o solver GLPK. Essa biblioteca é uma ferramenta poderosa para a resolução de problemas de programação linear. Com ela, podemos escrever o modelo de forma clara e concisa, e resolver o problema de forma eficiente.
-
-Inicialmente, precisamos instalar a bibloteca Pyomo e o solver GLPK.
-"""
-
-
-"""Com isso instalado, podemos implementar nosso modelo."""
 
 import pyomo.environ as pyo
 
@@ -485,32 +427,7 @@ modelo = criar_modelo_inteiro(
 )
 resolver_modelo(modelo, log=True)
 
-"""# Refinando as Restrições em Modelos de Programação Linear
 
-Com isso em mente, podemos explorar tipos de restrições extremamente úteis para problemas de tomada de decisão. Em particular, as variáveis inteiras do tipo binária desempenham um papel fundamental na criação de restrições lógicas como "E" (AND), "OU" (OR) e "SE Então" (IF-THEN). Essas restrições são essenciais para modelar e resolver problemas complexos com múltiplas condições e escolhas a serem feitas de forma lógica e eficaz.
-
-## Incorporando Restrições do Tipo E
-
-A restrição lógica "E" (AND) em programação inteira é utilizada para modelar situações em que duas ou mais variáveis binárias devem assumir o valor 1 simultaneamente para que a condição seja satisfeita. Em outras palavras, todas as condições devem ser verdadeiras para que a restrição seja válida.
-
-No exemplo:
-
-```python
-modelo.visitas["Torre Eiffel"] + modelo.visitas["Jardim de Luxemburgo"] == 2
-```
-
-Nós temos duas variáveis binárias, uma representando a visita à "Torre Eiffel" e outra representando a visita ao "Jardim de Luxemburgo". Essas variáveis podem assumir apenas dois valores: 0 (não visitado) ou 1 (visitado).
-
-A restrição `modelo.visitas["Torre Eiffel"] + modelo.visitas["Jardim de Luxemburgo"] == 2` estabelece que ambas as atrações, "Torre Eiffel" e "Jardim de Luxemburgo", devem ser visitadas ao mesmo tempo. A soma das variáveis binárias que representam essas atrações deve ser igual a 2 para que a restrição seja satisfeita.
-
-A lógica por trás disso é a seguinte:
-
-- Se `modelo.visitas["Torre Eiffel"]` e `modelo.visitas["Jardim de Luxemburgo"]` forem ambas iguais a 1, significa que ambas as atrações foram visitadas (1 + 1 = 2), atendendo à condição "E" (ambas).
-
-- Se qualquer uma das variáveis for igual a 0, isso significa que pelo menos uma das atrações não foi visitada, o que torna a soma igual a 1 ou menos, não atendendo à condição "E".
-
-Portanto, a restrição garante que as duas atrações sejam visitadas simultaneamente, representando uma lógica de "E" (AND) na programação inteira.
-"""
 
 
 def criar_modelo_inteiro(
@@ -573,28 +490,6 @@ modelo = criar_modelo_inteiro(
 )
 resolver_modelo(modelo, log=False)
 
-"""## Incorporando Restrições do Tipo OU exclusivo
-
-A restrição condicional "OU exclusivo" em programação inteira é utilizada para modelar situações em no máximo uma das várias variáveis binárias pode assumir o valor 1 para que a condição seja satisfeita.
-
-No exemplo:
-
-```python
-modelo.visitas["Parc des Princes"] + modelo.visitas["Stade de France"] <= 1
-```
-
-Temos duas variáveis binárias, uma representando a visita ao "Parc des Princes" e outra representando a visita ao "Stade de France". Ambas as variáveis podem assumir apenas dois valores: 0 (não visitado) ou 1 (visitado).
-
-A restrição `modelo.visitas["Parc des Princes"] + modelo.visitas["Stade de France"] <= 1` estabelece que no máximo uma das atrações, "Parc des Princes" ou "Stade de France", pode ser visitada. A soma das variáveis binárias que representam essas atrações deve ser menor ou igual a 1 para que a restrição seja satisfeita.
-
-A lógica por trás disso é a seguinte:
-
-- Se `modelo.visitas["Parc des Princes"]` e `modelo.visitas["Stade de France"]` simultaneamente forem iguais a 1, significa que a soma das variáveis de decisão será igual a 2, indicando que as duas não podem ser visitadas na mesma viagem.
-ls
-- Se ambas as variáveis forem iguais a 0, isso significaria que nenhuma das atrações foi visitada, tornando a soma igual a 0, o que ainda atende à condição "OU exclusiva" (no máximo uma).
-
-Portanto, a restrição garante que no máximo uma das duas atrações seja visitada, representando uma lógica de "OU exclusivo" na programação inteira.
-"""
 
 
 def criar_modelo_inteiro(
@@ -685,28 +580,6 @@ condicoes = {
 adicionar_restricoes(modelo, condicoes)
 resolver_modelo(modelo, log=False)
 
-"""## Incorporando Restrições do Tipo SE ENTAO
-
-A restrição condicional "SE ENTÃO" em programação inteira é utilizada para modelar situações em que uma variável binária deve assumir o valor 1 se outra variável binária assumir o valor 1. Ou seja, se a primeira condição for verdadeira (a variável à esquerda for 1), então a segunda condição também deve ser verdadeira (a variável à direita deve ser 1).
-
-No exemplo:
-
-```python
-modelo.visitas["Parc des Princes"] <= modelo.visitas["Jardim de Luxemburgo"]
-```
-
-Temos duas variáveis binárias, uma representando a visita ao "Parc des Princes" e outra representando a visita ao "Jardim de Luxemburgo". Ambas as variáveis podem assumir apenas dois valores: 0 (não visitado) ou 1 (visitado).
-
-A restrição `modelo.visitas["Parc des Princes"] <= modelo.visitas["Jardim de Luxemburgo"]` estabelece que, se a variável `modelo.visitas["Parc des Princes"]` for igual a 1 (ou seja, se "Parc des Princes" for visitado), então a variável `modelo.visitas["Jardim de Luxemburgo"]` também deve ser igual a 1 (ou seja, "Jardim de Luxemburgo" deve ser visitado).
-
-A lógica por trás disso é a seguinte:
-
-- Se `modelo.visitas["Parc des Princes"]` for igual a 0 (não visitado), a restrição não impõe nenhuma restrição à variável `modelo.visitas["Jardim de Luxemburgo"]`. Pode ser 0 ou 1.
-
-- No entanto, se `modelo.visitas["Parc des Princes"]` for igual a 1 (visitado), a restrição exige que `modelo.visitas["Jardim de Luxemburgo"]` também seja igual a 1, garantindo assim que, se "Parc des Princes" for visitado, "Jardim de Luxemburgo" também deve ser visitado.
-
-Portanto, a restrição condicional "SE ENTÃO" na programação inteira modela uma lógica em que uma ação (visitar "Parc des Princes") implica necessariamente em outra ação (visitar "Jardim de Luxemburgo").
-"""
 
 
 def criar_modelo_inteiro(
@@ -782,12 +655,6 @@ condicoes = {"Parc des Princes": {"valor": 1, "sinal": ">="}}
 adicionar_restricoes(modelo, condicoes)
 resolver_modelo(modelo, log=False)
 
-"""# Explorando Variações no Modelo de Planejamento de Visitas Turísticas
-
-## Estratégias com Soft Constraints para Acomodar Mais Atrações por Dia
-
-Vamos abordar a situação atual do nosso modelo, onde temos uma restrição rígida que nos obriga a visitar no mínimo 4 atrações turísticas. Agora, imagine o que aconteceria se decidíssemos aumentar esse número para 8 atrações
-"""
 
 
 def criar_modelo_inteiro(
@@ -845,15 +712,7 @@ modelo = criar_modelo_inteiro(
 )
 resolver_modelo(modelo, log=False)
 
-"""Quando fizemos essa mudança, nosso problema se tornou inviável. Em outras palavras, o modelo não conseguiu encontrar uma solução que atendesse à nova restrição de visitar no mínimo 8 atrações. Isso ocorreu porque a restrição anterior era considerada "hard", o que significa que o modelo era absolutamente obrigado a respeitá-la, e não havia margem para flexibilidade.
 
-Agora, surge a pergunta: existe uma maneira mais flexível de modelar essa restrição? A resposta é sim, podemos usar o conceito de "restrições soft" (ou restritivas flexíveis). Aqui está como funciona:
-
-As "restrições soft" permitem uma abordagem mais adaptável. Em vez de impor uma condição rígida que deve ser estritamente obedecida, atribuímos um peso a essa restrição e incorporamos esse peso na função objetivo do problema de otimização.
-
-Nesse caso, em vez de simplesmente minimizar o número de atrações visitadas, podemos maximizar o número de atrações visitadas enquanto minimizamos o custo total das visitas (orçamento). Isso nos permite encontrar um equilíbrio entre visitar o máximo possível de atrações e controlar o custo da viagem.
-
-"""
 
 
 def criar_modelo_inteiro(
@@ -910,27 +769,6 @@ modelo = criar_modelo_inteiro(
     peso_restricao,
 )
 resolver_modelo(modelo, log=False)
-
-"""É importante destacar que, ao utilizar "restrições soft" e atribuir pesos na função objetivo, é crucial ponderar cuidadosamente a importância relativa dessas restrições. A escolha dos pesos influenciará diretamente a solução ótima do problema de otimização.
-
-Ao atribuir pesos, você está essencialmente fazendo um compromisso entre diferentes objetivos. Por exemplo, se você atribuir um peso maior à maximização do número de atrações visitadas, o modelo priorizará visitar o maior número possível de locais, possivelmente ignorando o orçamento.
-
-Por outro lado, se você atribuir um peso maior à minimização do orçamento, o modelo priorizará a economia de custos, o que pode resultar em visitar menos atrações, mas dentro do orçamento disponível.
-
-Portanto, a escolha dos pesos na função objetivo deve ser baseada em considerações específicas do problema e nas prioridades do tomador de decisão. É uma parte crítica do processo de modelagem e otimização, e é importante encontrar um equilíbrio que atenda às suas metas e restrições de forma satisfatória. Experimentar diferentes combinações de pesos e realizar análises de sensibilidade pode ser útil para tomar decisões informadas.
-
-
-Em resumo, as "restrições soft" proporcionam maior flexibilidade ao modelo, permitindo que ele ajuste automaticamente o número de atrações a serem visitadas com base em outras considerações, como o orçamento. Isso torna o modelo mais realista e adaptável às necessidades da viagem.
-
-## Maximizando a Menor Quantidade e Outras Funções Objetivas
-
-Agora, vamos abordar um novo problema que envolve mais complexidade. Imagine que temos a oportunidade de passar 4 dias em Paris, e durante cada dia, desejamos visitar o maior número possível de atrações, sem repetir nenhuma delas. Isso significa que queremos explorar Paris de forma abrangente, visitando o máximo de pontos turísticos diferentes em cada dia, sem revisitar nenhum deles.
-
-Para ajustar o modelo anterior para esse novo cenário, precisaremos fazer algumas modificações. Primeiro, precisamos dividir as atrações em 4 conjuntos, um para cada dia da nossa estadia. Em seguida, garantiremos que, para cada conjunto de atrações de um dia, escolhamos no máximo uma atração para visitar, garantindo que não haja repetições. Também ajustaremos a função objetivo para considerar o custo total durante os 4 dias e, ao mesmo tempo, maximizar o número de atrações visitadas em cada dia.
-
-Essa é uma extensão interessante do problema anterior, onde consideramos não apenas o custo e o tempo, mas também a distribuição das visitas ao longo dos dias da nossa estadia. A otimização desse novo cenário nos permitirá aproveitar ao máximo nossa viagem a Paris, explorando uma ampla variedade de atrações durante toda a estadia.
-"""
-
 
 def criar_modelo_inteiro_dias(
     atracoes,
@@ -1109,22 +947,7 @@ modelo = criar_modelo_inteiro_dias(
 )
 resolver_modelo_dias(modelo, log=False)
 
-"""Ao lidar com o planejamento de visitas turísticas em um itinerário de vários dias, muitas vezes enfrentamos o desafio de decidir como distribuir nosso tempo e recursos de forma eficaz. Duas abordagens comuns para otimizar essa decisão são a maximização da soma total das atrações visitadas em todos os dias e a abordagem Max-Min, onde buscamos maximizar a menor quantidade de atrações visitadas em um único dia.
 
-Na primeira abordagem, focamos na maximização da soma total de atrações visitadas durante toda a viagem. Neste cenário, estamos preocupados principalmente em aproveitar ao máximo cada dia, independentemente de quantas atrações visitemos em cada um deles. Isso significa que podemos ter dias em que visitamos um grande número de atrações e outros em que visitamos muito poucas ou nenhuma. O objetivo principal é obter o máximo de valor possível durante a viagem, sem se preocupar com a distribuição específica das visitas ao longo dos dias.
-
-Por outro lado, a abordagem Max-Min (ou Min-Max) se concentra em maximizar a menor quantidade de atrações visitadas em um único dia. Neste caso, estamos mais preocupados com a consistência ao longo da viagem. Queremos garantir que, mesmo que tenhamos dias com muitas atrações, não deixemos nenhum dia com muito poucas ou nenhuma visita. Isso pode ser útil quando desejamos uma experiência mais equilibrada ao longo da viagem, evitando grandes variações na quantidade de atividades a cada dia.
-
-# Desafios em Modelagem com Dados Extensos
-
-## Dimensionando o Modelo
-
-Imagine que estamos planejando uma viagem turística e queremos testar nosso modelo de planejamento em diferentes situações. A razão para fazer isso é verificar como o nosso modelo se comporta quando temos um grande número de atrações turísticas para visitar em vários dias.
-
-Então, vamos criar uma função que gera parâmetros aleatórios para simular um cenário de viagem mais complexo. Nesta função, vamos gerar dados aleatórios, como custo de entrada em cada atração, tempo recomendado para visitar cada local, limites de tempo máximo disponível em cada dia da viagem e limites de orçamento diário. Esses parâmetros são cruciais para o nosso modelo tomar decisões sobre quais atrações visitar em cada dia, levando em consideração restrições de tempo e orçamento.
-
-Gerar esses dados aleatórios nos permitirá testar o desempenho do nosso modelo em situações variadas e entender como ele se adapta a diferentes cenários de planejamento de viagens. Isso nos ajudará a avaliar a eficácia do modelo em lidar com desafios do mundo real, onde há muitas atrações e restrições de recursos.
-"""
 
 import random
 
@@ -1164,7 +987,6 @@ num_dias = 60
     orcamento_diario,
 ) = gerar_parametros(num_atracoes=num_atracoes, num_dias=num_dias)
 
-"""Ao tentar executar o código abaixo veremos que o modelo demora bastante para encontrar uma solução."""
 
 modelo = criar_modelo_inteiro_dias(
     atracoes,

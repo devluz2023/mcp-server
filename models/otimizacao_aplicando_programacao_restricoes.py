@@ -203,16 +203,6 @@ def alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis):
 
 alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis)
 
-"""## Identificando inviabilidade e resolvendo modelo
-
-[Documentação de descrições de status OR-Tools](https://developers.google.com/optimization/cp/cp_solver?hl=pt-br#cp-sat_return_values)
-
-- **OPTIMAL**: Foi encontrada uma solução ideal viável.
-- **FEASIBLE**:	Foi encontrada uma solução viável, mas não sabemos se é a ideal.
-- **INFEASIBLE**: O problema se mostrou inviável.
-- **MODEL_INVALID**:	O CpModelProto fornecido não passou na etapa de validação. Para receber um erro detalhado, chame ValidateCpModel(model_proto).
-- **UNKNOWN**:	O status do modelo é desconhecido porque nenhuma solução foi encontrada (ou o problema não foi considerado inviável) antes de algo fazer com que o solucionador parasse, como um limite de tempo, um limite de memória ou um limite personalizado definido pelo usuário.
-"""
 
 
 def descricao_status(status):
