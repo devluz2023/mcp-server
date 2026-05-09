@@ -1,6 +1,5 @@
-import pandas as pd
 import numpy as np
-from scipy.stats import ks_2samp, chi2_contingency
+from scipy.stats import chi2_contingency, ks_2samp
 
 
 # =========================================================
@@ -40,7 +39,7 @@ def numeric_drift(series):
     return {
         "ks_statistic": float(stat),
         "p_value": float(p),
-        "drift_detected": bool(p < 0.05)
+        "drift_detected": bool(p < 0.05),
     }
 
 
@@ -61,11 +60,7 @@ def categorical_drift(series):
 
     chi2, p, _, _ = chi2_contingency([v1, v2])
 
-    return {
-        "chi2": float(chi2),
-        "p_value": float(p),
-        "drift_detected": bool(p < 0.05)
-    }
+    return {"chi2": float(chi2), "p_value": float(p), "drift_detected": bool(p < 0.05)}
 
 
 # =========================================================
@@ -81,7 +76,7 @@ def id_drift(series):
     return {
         "new_ids": len(s2 - s1),
         "missing_ids": len(s1 - s2),
-        "coverage": len(s1 & s2) / max(len(s1), 1)
+        "coverage": len(s1 & s2) / max(len(s1), 1),
     }
 
 
@@ -107,7 +102,7 @@ def run_drift_single_table(df):
         "estado_cliente",
         "status_pedido",
         "categoria",
-        "pagamento_tipo"
+        "pagamento_tipo",
     ]
 
     for col in cat_cols:
@@ -124,6 +119,3 @@ def run_drift_single_table(df):
     results["id_cliente"] = id_drift(df["id_cliente"])
 
     return results
-
-
-

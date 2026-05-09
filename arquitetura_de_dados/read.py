@@ -1,5 +1,4 @@
 from databricks.connect import DatabricksSession
-from pyspark.sql import functions as F
 
 # 1. Inicializa a sessão (Modo de leitura apenas)
 spark = DatabricksSession.builder.getOrCreate()
@@ -8,7 +7,7 @@ spark = DatabricksSession.builder.getOrCreate()
 tabela_fonte = "pedido.default.cliente"
 tabela_features = "pedido.default.cliente_features"
 
-print(f"--- Comparação de Tabelas ---")
+print("--- Comparação de Tabelas ---")
 
 # 3. Leitura dos DataFrames
 df_fonte = spark.table(tabela_fonte)
@@ -23,14 +22,20 @@ print(f"Total registros na Feature Store: {total_features}")
 
 # 5. Verificação de ID (Garante que os clientes são os mesmos)
 # Verifica se há IDs na feature que não estão na fonte
-diff_count = df_features.select("id_unico_cliente") \
-    .subtract(df_fonte.select("id_unico_cliente")) \
+diff_count = (
+    df_features.select("id_unico_cliente")
+    .subtract(df_fonte.select("id_unico_cliente"))
     .count()
+)
 
 if diff_count == 0:
-    print("Status: Todos os IDs da Feature Store existem na Tabela Fonte (Integridade OK).")
+    print(
+        "Status: Todos os IDs da Feature Store existem na Tabela Fonte (Integridade OK)."
+    )
 else:
-    print(f"Status: ALERTA! Existem {diff_count} IDs na Feature Store que não estão na Fonte.")
+    print(
+        f"Status: ALERTA! Existem {diff_count} IDs na Feature Store que não estão na Fonte."
+    )
 
 # 6. Comparação de Schema (Visualiza se as estruturas são compatíveis)
 print("\n--- Comparação de Esquema ---")
@@ -52,10 +57,14 @@ print(f"Número de colunas na Feature Store: {num_cols_features}")
 if num_cols_fonte == num_cols_features:
     print("Status: O número de colunas é IDÊNTICO.")
 else:
-    print(f"Status: DIFERENÇA DE COLUNAS! A diferença é de {abs(num_cols_fonte - num_cols_features)} colunas.")
+    print(
+        f"Status: DIFERENÇA DE COLUNAS! A diferença é de {abs(num_cols_fonte - num_cols_features)} colunas."
+    )
 
 # Comparação de Linhas
 if total_fonte == total_features:
     print(f"Status: O número de linhas é IDÊNTICO ({total_fonte} registros).")
 else:
-    print(f"Status: DIFERENÇA DE LINHAS! Fonte: {total_fonte} | Features: {total_features}")
+    print(
+        f"Status: DIFERENÇA DE LINHAS! Fonte: {total_fonte} | Features: {total_features}"
+    )

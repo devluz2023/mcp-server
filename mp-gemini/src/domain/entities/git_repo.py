@@ -1,10 +1,12 @@
 # src/domain/entities/git_repo.py
 from dataclasses import dataclass
 
+
 @dataclass
 class GitRepository:
     id: str
     name: str
+
 
 @dataclass
 class PullRequest:

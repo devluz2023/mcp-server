@@ -1,50 +1,44 @@
-from databricks.sdk import WorkspaceClient
-import os
-from dotenv import load_dotenv
 import json
-import requests
+import os
+
 import pandas as pd
-import subprocess
-from databricks.sdk.service.jobs import JobSettings, Task, NotebookTask, SparkPythonTask
-from pyspark.sql import functions as F
-import sys
-load_dotenv()
-from databricks.connect import DatabricksSession
 import requests
-import os
-import json
-import yaml
-import src.drift as drift
-import os
-import json
-import requests
+from databricks.sdk import WorkspaceClient
+from databricks.sdk.service.jobs import JobSettings, NotebookTask, SparkPythonTask, Task
 from dotenv import load_dotenv
+from pyspark.sql import functions as F
+
+load_dotenv()
+import src.drift as drift
+import yaml
+from databricks.connect import DatabricksSession
+from dotenv import load_dotenv
+
+
 # =========================
 # WORKSPACE CLIENT (REST API)
 # =========================
 def get_workspace_client():
     return WorkspaceClient(
-        host=os.getenv("DATABRICKS_HOST"),
-        token=os.getenv("DATABRICKS_TOKEN")
+        host=os.getenv("DATABRICKS_HOST"), token=os.getenv("DATABRICKS_TOKEN")
     )
+
 
 def get_cluster_id():
     return os.getenv("DATABRICKS_CLUSTER_ID")
-
-
 
 
 # =========================
 # LAZY LOAD (CORRETO)
 # =========================
 def get_spark():
-    from databricks.connect import DatabricksSession
     return DatabricksSession.builder.getOrCreate()
 
 
 def get_fe():
     # ⚠️ só funciona se Databricks Connect estiver OK
     from databricks.feature_engineering import FeatureEngineeringClient
+
     return FeatureEngineeringClient()
 
 
@@ -99,9 +93,9 @@ def criar_job(nome: str):
                     existing_cluster_id=cluster_id,
                     notebook_task=NotebookTask(
                         notebook_path="/Workspace/Users/seu_usuario/exemplo_notebook"
-                    )
+                    ),
                 )
-            ]
+            ],
         )
 
         return f"Job criado com sucesso! ID: {job.job_id}"
@@ -109,24 +103,22 @@ def criar_job(nome: str):
     except Exception as e:
         return f"Erro ao criar job: {str(e)}"
 
+
 # =========================
 # ATUALIZAR JOB
 # =========================
 
+
 def atualizar_job(job_id: int, novo_nome: str):
     """Atualiza o nome de um job."""
     try:
-        w.jobs.update(
-            job_id=job_id,
-            new_settings=JobSettings(
-                name=novo_nome
-            )
-        )
+        w.jobs.update(job_id=job_id, new_settings=JobSettings(name=novo_nome))
 
         return f"Job {job_id} atualizado para '{novo_nome}'"
 
     except Exception as e:
         return f"Erro ao atualizar job: {str(e)}"
+
 
 # =========================
 # DELETAR JOB
@@ -139,7 +131,7 @@ def deletar_job(job_id: int):
 
     except Exception as e:
         return f"Erro ao deletar job: {str(e)}"
-    
+
 
 def calcular_custo(run_id: int):
     """Consulta o custo via System Tables."""
@@ -151,7 +143,7 @@ def calcular_custo(run_id: int):
 
     response = w.statement_execution.execute_statement(
         statement=query,
-        warehouse_id=os.getenv("DATABRICKS_WAREHOUSE_ID")  # ⚠️ obrigatório
+        warehouse_id=os.getenv("DATABRICKS_WAREHOUSE_ID"),  # ⚠️ obrigatório
     )
 
     # 🔥 pegar resultado
@@ -162,17 +154,12 @@ def calcular_custo(run_id: int):
     return "Custo não disponível ou Run ID inválido."
 
 
-
-
 def criar_dashboard_padrao():
     load_dotenv()
     try:
         base_dir = os.path.dirname(os.path.abspath(__file__))
         caminho = os.path.join(
-            base_dir,
-            "..",
-            "dashboard",
-            "agent_monitoring_dashboard.lvdash.json"
+            base_dir, "..", "dashboard", "agent_monitoring_dashboard.lvdash.json"
         )
 
         if not os.path.exists(caminho):
@@ -182,19 +169,19 @@ def criar_dashboard_padrao():
             conteudo_dashboard = json.load(f)
 
         # Construção do payload conforme exigido pela documentação da API Lakeview
-        # O campo 'serialized_dashboard' precisa ser uma string JSON, 
+        # O campo 'serialized_dashboard' precisa ser uma string JSON,
         # por isso usamos json.dumps() no objeto carregado.
         payload = {
             "display_name": "Agent Monitoring Dashboard",
             "warehouse_id": os.getenv("DATABRICKS_WAREHOUSE_ID"),
-            "serialized_dashboard": json.dumps(conteudo_dashboard)           
+            "serialized_dashboard": json.dumps(conteudo_dashboard),
         }
 
         url = f"{os.getenv('DATABRICKS_HOST')}/api/2.0/lakeview/dashboards"
 
         headers = {
             "Authorization": f"Bearer {os.getenv('DATABRICKS_TOKEN')}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
         response = requests.post(url, headers=headers, json=payload)
@@ -208,16 +195,16 @@ def criar_dashboard_padrao():
     except Exception as e:
         return f"Erro inesperado: {str(e)}"
 
+
 def listar_modelos():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     models_dir = os.path.join(base_dir, "..", "models")
 
-    arquivos = [
-        f for f in os.listdir(models_dir)
-        if f.endswith(".py")
-    ]
+    arquivos = [f for f in os.listdir(models_dir) if f.endswith(".py")]
 
     return arquivos
+
+
 from databricks.sdk.service.workspace import ImportFormat
 
 
@@ -226,7 +213,7 @@ def upload_modelo(nome_arquivo: str):
         base_dir = os.path.dirname(os.path.abspath(__file__))
         local_path = os.path.join(base_dir, "..", "models", nome_arquivo)
 
-        workspace_folder = "/Users/fabio.jdluz@gmail.com/models" # Criei uma pasta models dentro do seu usuário para organizar
+        workspace_folder = "/Users/fabio.jdluz@gmail.com/models"  # Criei uma pasta models dentro do seu usuário para organizar
         workspace_path = f"{workspace_folder}/{nome_arquivo}"
 
         # 1. Cria a pasta
@@ -238,7 +225,7 @@ def upload_modelo(nome_arquivo: str):
                 path=workspace_path,
                 content=f,
                 overwrite=True,
-                 format=ImportFormat.AUTO # Isso diz ao Databricks: "trate como código fonte"
+                format=ImportFormat.AUTO,  # Isso diz ao Databricks: "trate como código fonte"
             )
 
         return workspace_path
@@ -248,6 +235,7 @@ def upload_modelo(nome_arquivo: str):
 
     except Exception as e:
         return f"Erro ao subir modelo: {str(e)}"
+
 
 def criar_job_modelo(nome_arquivo: str, workspace_path: str):
     cluster_id = os.getenv("DATABRICKS_CLUSTER_ID")
@@ -259,18 +247,17 @@ def criar_job_modelo(nome_arquivo: str, workspace_path: str):
             Task(
                 task_key="model",
                 existing_cluster_id=cluster_id,
-                spark_python_task=SparkPythonTask(
-                    python_file=workspace_path
-                )
+                spark_python_task=SparkPythonTask(python_file=workspace_path),
             )
-        ]
+        ],
     )
     return job.job_id
+
 
 def deploy_modelo(nome_arquivo: str):
     try:
         workspace_path = upload_modelo(nome_arquivo)
-        
+
         if isinstance(workspace_path, str) and "Erro" in workspace_path:
             return workspace_path
 
@@ -282,14 +269,13 @@ def deploy_modelo(nome_arquivo: str):
         return f"Erro no deploy: {str(e)}"
 
 
-
 def bundle_job_yaml():
     """
     Faz deploy do job YAML direto via REST API (sem conversão manual)
     """
 
     import os
-    import yaml
+
     import requests
     from dotenv import load_dotenv
 
@@ -320,38 +306,29 @@ def bundle_job_yaml():
 
         headers = {
             "Authorization": f"Bearer {os.getenv('DATABRICKS_TOKEN')}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
         response = requests.post(
             url,
             headers=headers,
-            json=job_cfg   # 🔥 manda direto o YAML convertido
+            json=job_cfg,  # 🔥 manda direto o YAML convertido
         )
 
         if response.status_code != 200:
-            return {
-                "status": "error",
-                "message": response.text
-            }
+            return {"status": "error", "message": response.text}
 
         data = response.json()
 
         return {
             "status": "success",
             "job_id": data.get("job_id"),
-            "job_name": job_cfg["name"]
+            "job_name": job_cfg["name"],
         }
 
     except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+        return {"status": "error", "message": str(e)}
 
-import os
-import pandas as pd
-from pyspark.sql import functions as F
 
 def executar_pipeline_csv_para_feature_store():
     """
@@ -417,7 +394,7 @@ def executar_pipeline_csv_para_feature_store():
         df_features = df.groupBy("id_unico_cliente").agg(
             F.count("*").alias("total_registros"),
             F.avg("preco").alias("ticket_medio"),
-            F.sum("preco").alias("valor_total")
+            F.sum("preco").alias("valor_total"),
         )
 
         # =========================
@@ -428,24 +405,26 @@ def executar_pipeline_csv_para_feature_store():
                 fe.create_table(
                     name=feature_table_name,
                     primary_keys=["id_unico_cliente"],
-                    df=df_features
+                    df=df_features,
                 )
             except:
-                df_features.write.format("delta").mode("overwrite").saveAsTable(feature_table_name)
+                df_features.write.format("delta").mode("overwrite").saveAsTable(
+                    feature_table_name
+                )
         else:
-            df_features.write.format("delta").mode("overwrite").saveAsTable(feature_table_name)
+            df_features.write.format("delta").mode("overwrite").saveAsTable(
+                feature_table_name
+            )
 
         return {
             "status": "success",
             "base_table": base_table,
-            "feature_table": feature_table_name
+            "feature_table": feature_table_name,
         }
 
     except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+        return {"status": "error", "message": str(e)}
+
 
 def show_drift():
 

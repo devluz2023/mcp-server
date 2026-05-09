@@ -1,6 +1,6 @@
 import numpy as np
-from scipy.stats import ks_2samp, chi2_contingency
 from databricks.connect import DatabricksSession
+from scipy.stats import chi2_contingency, ks_2samp
 
 
 def run_drift():
@@ -49,8 +49,8 @@ def run_drift():
     all_keys = set(e.index).union(set(a.index))
 
     psi = sum(
-        (a.get(k, 0.0001) - e.get(k, 0.0001)) *
-        np.log(a.get(k, 0.0001) / e.get(k, 0.0001))
+        (a.get(k, 0.0001) - e.get(k, 0.0001))
+        * np.log(a.get(k, 0.0001) / e.get(k, 0.0001))
         for k in all_keys
     )
 
@@ -61,13 +61,13 @@ def run_drift():
         "drift_preco_ks": {
             "statistic": float(ks_stat),
             "p_value": float(ks_p),
-            "drift": bool(ks_p < 0.05)
+            "drift": bool(ks_p < 0.05),
         },
         "drift_status_chi2": {
             "statistic": float(chi2),
             "p_value": float(chi_p),
-            "drift": bool(chi_p < 0.05)
+            "drift": bool(chi_p < 0.05),
         },
         "psi_preco": float(psi),
-        "overall_drift": bool(ks_p < 0.05 or chi_p < 0.05 or psi > 0.2)
+        "overall_drift": bool(ks_p < 0.05 or chi_p < 0.05 or psi > 0.2),
     }

@@ -1,8 +1,8 @@
 from langchain_openai import ChatOpenAI
 from src.application.ports.llm_provider import LLMProviderPort
 
+
 class OpenAIGateway(LLMProviderPort):
- 
     def __init__(self, api_key: str, model="gpt-4o-mini"):
         if not api_key:
             raise ValueError("API Key é obrigatória para o OpenAIGateway")

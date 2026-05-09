@@ -1,9 +1,9 @@
 import streamlit as st
 from src.application.services.agent_service import AgentService
-from src.infrastructure.llm_gateways.openai_gateway import OpenAIGateway
+from src.domain.use_cases.setup_devops_environment import SetupDevOpsEnvironment
 from src.infrastructure.adapters.azure_git_adapter import AzureGitAdapter
-from src.domain.use_cases.setup_devops_environment import   SetupDevOpsEnvironment
 from src.infrastructure.config.settings import settings
+from src.infrastructure.llm_gateways.openai_gateway import OpenAIGateway
 
 # Inicializa o serviço (maestro)
 if "agent" not in st.session_state:

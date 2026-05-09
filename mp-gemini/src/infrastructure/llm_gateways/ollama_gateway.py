@@ -2,12 +2,11 @@
 from langchain_ollama import ChatOllama
 from src.application.ports.llm_provider import LLMProviderPort
 
+
 class OllamaGateway(LLMProviderPort):  # Verifique se o nome está idêntico aqui
     def __init__(self, model="qwen2.5-coder:7b"):
         self.llm = ChatOllama(
-            model=model,
-            temperature=0,
-            base_url="http://localhost:11434"
+            model=model, temperature=0, base_url="http://localhost:11434"
         )
 
     def invoke(self, messages, tools):

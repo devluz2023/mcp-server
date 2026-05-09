@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List
-from src.domain.entities.job import DatabricksJob # Criaremos essa classe a seguir
+
+from src.domain.entities.job import DatabricksJob  # Criaremos essa classe a seguir
+
 
 class JobRepositoryPort(ABC):
     @abstractmethod

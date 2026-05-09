@@ -1,14 +1,14 @@
+import logging
+import os
 from typing import List
 
 from databricks.sdk import WorkspaceClient
-from src.domain.entities.job import DatabricksJob
 from src.application.ports.job_repository import JobRepositoryPort
-import os
-import logging
-
+from src.domain.entities.job import DatabricksJob
 
 # Configura um logger para avisar que algo falhou sem travar o app
 logger = logging.getLogger(__name__)
+
 
 class DatabricksJobRepository(JobRepositoryPort):
     def __init__(self):
@@ -24,22 +24,19 @@ class DatabricksJobRepository(JobRepositoryPort):
             if not self.host or not self.token:
                 logger.warning("Credenciais do Databricks não encontradas!")
                 raise ConnectionError("DATABRICKS_HOST ou TOKEN não configurados.")
-            
+
             try:
                 self._client = WorkspaceClient(host=self.host, token=self.token)
             except Exception as e:
                 logger.error(f"Erro ao inicializar cliente Databricks: {e}")
                 raise
         return self._client
-    
 
     # No seu DatabricksJobRepository
     def list_jobs(self) -> List[DatabricksJob]:
         sdk_jobs = self.client.jobs.list()
         # Tradução: SDK -> Entidade de Domínio
         return [DatabricksJob(job_id=j.job_id, name=j.settings.name) for j in sdk_jobs]
-
- 
 
     def delete_job(self, job_id: int) -> bool:
         try:

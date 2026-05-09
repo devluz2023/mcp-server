@@ -2,28 +2,22 @@
 
 import pyomo.environ as pyo
 
-lucro_por_tipo = {
-  "Tomate": 2.00,
-  "Alface": 1.50
-}
+lucro_por_tipo = {"Tomate": 2.00, "Alface": 1.50}
 
 # Lucro por quilo de cada tipo de alimento
-lucro_por_tipo = {
-    "Tomate": 2.00,
-    "Alface": 1.50
-}
+lucro_por_tipo = {"Tomate": 2.00, "Alface": 1.50}
 
 # Demanda de recursos por quilo de cada tipo de alimento
 # Agora, removemos o 'tempo_cuidado' e ajustamos as quantidades de água e espaço
 demanda_por_tipo = {
     "Tomate": {"agua": 3, "espaco": 2},
-    "Alface": {"agua": 2, "espaco": 3}
+    "Alface": {"agua": 2, "espaco": 3},
 }
 
 # Disponibilidade total de recursos na fazenda
 disponibilidade_recursos = {
-    "agua": 5900,   # litros disponíveis
-    "espaco": 5400  # metros quadrados de terra arável
+    "agua": 5900,  # litros disponíveis
+    "espaco": 5400,  # metros quadrados de terra arável
 }
 
 """## Vídeo 1.3
@@ -52,12 +46,12 @@ Com esses cálculos, podemos explorar diferentes combinações de produção de 
 # Cálculo do máximo que pode ser produzido para cada tipo de vegetal
 max_tomate = min(
     disponibilidade_recursos["agua"] / demanda_por_tipo["Tomate"]["agua"],
-    disponibilidade_recursos["espaco"] / demanda_por_tipo["Tomate"]["espaco"]
+    disponibilidade_recursos["espaco"] / demanda_por_tipo["Tomate"]["espaco"],
 )
 
 max_alface = min(
     disponibilidade_recursos["agua"] / demanda_por_tipo["Alface"]["agua"],
-    disponibilidade_recursos["espaco"] / demanda_por_tipo["Alface"]["espaco"]
+    disponibilidade_recursos["espaco"] / demanda_por_tipo["Alface"]["espaco"],
 )
 
 max_tomate
@@ -71,24 +65,38 @@ Vamos considerar que cada quilo de tomate gera um lucro de R\$ 2,00 e cada quilo
 
 """
 
+
 def calcular_lucro_e_viabilidade(qtd_tomate, qtd_alface):
     # Calcula o uso total de água e espaço para as quantidades escolhidas de tomate e alface
-    uso_agua = qtd_tomate * demanda_por_tipo["Tomate"]["agua"] + qtd_alface * demanda_por_tipo["Alface"]["agua"]
-    uso_espaco = qtd_tomate * demanda_por_tipo["Tomate"]["espaco"] + qtd_alface * demanda_por_tipo["Alface"]["espaco"]
+    uso_agua = (
+        qtd_tomate * demanda_por_tipo["Tomate"]["agua"]
+        + qtd_alface * demanda_por_tipo["Alface"]["agua"]
+    )
+    uso_espaco = (
+        qtd_tomate * demanda_por_tipo["Tomate"]["espaco"]
+        + qtd_alface * demanda_por_tipo["Alface"]["espaco"]
+    )
 
-    restricoes = {"agua": uso_agua, "espaco": uso_espaco, "diversificacao": (qtd_alface, qtd_tomate)}
+    restricoes = {
+        "agua": uso_agua,
+        "espaco": uso_espaco,
+        "diversificacao": (qtd_alface, qtd_tomate),
+    }
 
     # Verifica se a combinação de produção viola as restrições de recursos e diversificação
     viola_restricoes = (
-        uso_agua > disponibilidade_recursos["agua"] or
-        uso_espaco > disponibilidade_recursos["espaco"] or
-        qtd_tomate < 10/100*qtd_alface
+        uso_agua > disponibilidade_recursos["agua"]
+        or uso_espaco > disponibilidade_recursos["espaco"]
+        or qtd_tomate < 10 / 100 * qtd_alface
     )
 
     # Calcula o lucro total
-    lucro = qtd_tomate * lucro_por_tipo["Tomate"] + qtd_alface * lucro_por_tipo["Alface"]
+    lucro = (
+        qtd_tomate * lucro_por_tipo["Tomate"] + qtd_alface * lucro_por_tipo["Alface"]
+    )
 
     return lucro, viola_restricoes, restricoes
+
 
 """Assim conseguimos testar quantidades de produção e verificar o lucro, se violamos alguma restrição ou não e os recursos utilizados."""
 
@@ -115,7 +123,9 @@ for qtd_tomate in range(0, int(max_tomate) + 1, 100):
 
         # Se a combinação não viola as restrições, imprime a solução
         if not viola:
-            print(f"Tomate: {qtd_tomate} kg, Alface: {qtd_alface} kg, Lucro: R$ {lucro:.2f}")
+            print(
+                f"Tomate: {qtd_tomate} kg, Alface: {qtd_alface} kg, Lucro: R$ {lucro:.2f}"
+            )
 
 """## Vídeo 1.4
 
@@ -125,7 +135,10 @@ Para analisar as diferentes combinações de produção de tomate e alface e ent
 import pandas as pd
 
 # Criando um DataFrame com os resultados
-df = pd.DataFrame(lista_solucoes, columns=["qtd_tomate", "qtd_alface", "lucro", "viola_restricoes", "restricoes"])
+df = pd.DataFrame(
+    lista_solucoes,
+    columns=["qtd_tomate", "qtd_alface", "lucro", "viola_restricoes", "restricoes"],
+)
 df.head()  # Visualizando as primeiras linhas do DataFrame/
 
 """Podemos checar as combinações que não violam algum restrição:"""
@@ -211,28 +224,35 @@ x = np.linspace(0, x_max, 400)
 y = np.linspace(0, y_max, 400)
 
 # Restrições
-y1 = (5900 - 3*x) / 2  # Restrição de Água
-y2 = (5400 - 2*x) / 3       # Restrição de Espaço
-y3 = 10*x               # Restrição de Diversificação (Tomates pelo menos 10% de Alfaces)
+y1 = (5900 - 3 * x) / 2  # Restrição de Água
+y2 = (5400 - 2 * x) / 3  # Restrição de Espaço
+y3 = 10 * x  # Restrição de Diversificação (Tomates pelo menos 10% de Alfaces)
 
 plt.figure(figsize=(10, 8))
 
 # Área de solução viável
-plt.fill_between(x, 0, np.minimum(np.minimum(y1, y2), y3), where=(y1 >= 0) & (y2 >= 0) & (y3 >= 0), color='gray', alpha=0.3)
+plt.fill_between(
+    x,
+    0,
+    np.minimum(np.minimum(y1, y2), y3),
+    where=(y1 >= 0) & (y2 >= 0) & (y3 >= 0),
+    color="gray",
+    alpha=0.3,
+)
 
 # Linhas de restrição
-plt.plot(x, y1, color='b', label='Restrição de Água')
-plt.plot(x, y2, color='g', label='Restrição de Espaço')
-plt.plot(x, y3, color='r', label='Restrição de Diversificação')
+plt.plot(x, y1, color="b", label="Restrição de Água")
+plt.plot(x, y2, color="g", label="Restrição de Espaço")
+plt.plot(x, y3, color="r", label="Restrição de Diversificação")
 
 # Eixos e limites
 plt.xlim(0, x_max)
 plt.ylim(0, y_max)
-plt.xlabel('Quantidade de Tomates (em quilos)')
-plt.ylabel('Quantidade de Alfaces (em quilos)')
+plt.xlabel("Quantidade de Tomates (em quilos)")
+plt.ylabel("Quantidade de Alfaces (em quilos)")
 
 # Adicionando título e legenda
-plt.title('Solução Gráfica para o Problema de Otimização da Produção na Fazenda')
+plt.title("Solução Gráfica para o Problema de Otimização da Produção na Fazenda")
 plt.legend()
 
 """Quando plotamos as restrições de um problema de programação linear em um gráfico, identificamos uma área conhecida como "região viável". Esta região é delimitada pelas linhas das restrições e representa todas as soluções possíveis que respeitam essas restrições.
@@ -281,30 +301,37 @@ Usar curvas de nível para encontrar a solução ótima em um problema de progra
 plt.figure(figsize=(10, 8))
 
 # Área de solução viável
-plt.fill_between(x, 0, np.minimum(np.minimum(y1, y2), y3), where=(y1 >= 0) & (y2 >= 0) & (y3 >= 0), color='gray', alpha=0.3)
+plt.fill_between(
+    x,
+    0,
+    np.minimum(np.minimum(y1, y2), y3),
+    where=(y1 >= 0) & (y2 >= 0) & (y3 >= 0),
+    color="gray",
+    alpha=0.3,
+)
 
 # Linhas de restrição
-plt.plot(x, y1, color='b', label='Restrição de Água')
-plt.plot(x, y2, color='g', label='Restrição de Espaço')
-plt.plot(x, y3, color='r', label='Restrição de Diversificação')
+plt.plot(x, y1, color="b", label="Restrição de Água")
+plt.plot(x, y2, color="g", label="Restrição de Espaço")
+plt.plot(x, y3, color="r", label="Restrição de Diversificação")
 
 # Curvas de nível para a função objetivo
 X, Y = np.meshgrid(x, y)
 
 # Função objetivo: Z = 2x_Tomate + 1.5x_Alfaces
-Z = 2*X + 1.5*Y
+Z = 2 * X + 1.5 * Y
 
-plt.contour(X, Y, Z, 50, alpha=0.5, cmap='jet')
+plt.contour(X, Y, Z, 50, alpha=0.5, cmap="jet")
 
 
 # Eixos e limites
 plt.xlim(0, x_max)
 plt.ylim(0, y_max)
-plt.xlabel('Quantidade de Tomates (em quilos)')
-plt.ylabel('Quantidade de Alfaces (em quilos)')
+plt.xlabel("Quantidade de Tomates (em quilos)")
+plt.ylabel("Quantidade de Alfaces (em quilos)")
 
 # Adicionando título e legenda
-plt.title('Solução Gráfica para o Problema de Otimização da Produção na Fazenda')
+plt.title("Solução Gráfica para o Problema de Otimização da Produção na Fazenda")
 plt.legend()
 
 """A área cinza mostra todas as combinações possíveis de produção de tomates e alfaces que satisfazem as restrições de água, espaço e diversificação.
@@ -332,30 +359,37 @@ Portanto, vamos explorar como as novas curvas de nível nos guiam para uma solu�
 plt.figure(figsize=(10, 8))
 
 # Área de solução viável
-plt.fill_between(x, 0, np.minimum(np.minimum(y1, y2), y3), where=(y1 >= 0) & (y2 >= 0) & (y3 >= 0), color='gray', alpha=0.3)
+plt.fill_between(
+    x,
+    0,
+    np.minimum(np.minimum(y1, y2), y3),
+    where=(y1 >= 0) & (y2 >= 0) & (y3 >= 0),
+    color="gray",
+    alpha=0.3,
+)
 
 # Linhas de restrição
-plt.plot(x, y1, color='b', label='Restrição de Água')
-plt.plot(x, y2, color='g', label='Restrição de Espaço')
-plt.plot(x, y3, color='r', label='Restrição de Diversificação')
+plt.plot(x, y1, color="b", label="Restrição de Água")
+plt.plot(x, y2, color="g", label="Restrição de Espaço")
+plt.plot(x, y3, color="r", label="Restrição de Diversificação")
 
 # Curvas de nível para a função objetivo
 X, Y = np.meshgrid(x, y)
 
 # Função objetivo: Z = 2x_Tomate + 1.5x_Alfaces
-Z = 3*X + 2*Y
+Z = 3 * X + 2 * Y
 
-plt.contour(X, Y, Z, 50, alpha=0.5, cmap='jet')
+plt.contour(X, Y, Z, 50, alpha=0.5, cmap="jet")
 
 
 # Eixos e limites
 plt.xlim(0, x_max)
 plt.ylim(0, y_max)
-plt.xlabel('Quantidade de Tomates (em quilos)')
-plt.ylabel('Quantidade de Alfaces (em quilos)')
+plt.xlabel("Quantidade de Tomates (em quilos)")
+plt.ylabel("Quantidade de Alfaces (em quilos)")
 
 # Adicionando título e legenda
-plt.title('Solução Gráfica para o Problema de Otimização da Produção na Fazenda')
+plt.title("Solução Gráfica para o Problema de Otimização da Produção na Fazenda")
 plt.legend()
 
 """Ao olhar para o gráfico do nosso modelo da Fazenda VerdeVida, percebemos algo interessante sobre as curvas de nível da função objetivo e a restrição de espaço. Essas curvas, que representam diferentes valores de lucro, aparecem como linhas paralelas à linha que representa a restrição de espaço. Isso acontece porque a relação entre os lucros de tomates e alfaces é proporcional à relação de espaço que eles ocupam.
@@ -372,27 +406,29 @@ Imagine um cenário na Fazenda VerdeVida onde, por uma conjunção de circunstâ
 """
 
 # Área de solução viável
-plt.fill_between(x, 0, (y3 >= 0), color='gray', alpha=0.3)
+plt.fill_between(x, 0, (y3 >= 0), color="gray", alpha=0.3)
 
 # Linhas de restrição
-plt.plot(x, y3, color='r', label='Restrição de Diversificação')
+plt.plot(x, y3, color="r", label="Restrição de Diversificação")
 
 # Curvas de nível para a função objetivo
 X, Y = np.meshgrid(x, y)
 
 # Função objetivo: Z = 2x_Tomate + 1.5x_Alfaces
-Z = 2*X + 1.5*Y
+Z = 2 * X + 1.5 * Y
 
-plt.contour(X, Y, Z, 50, alpha=0.5, cmap='jet')
+plt.contour(X, Y, Z, 50, alpha=0.5, cmap="jet")
 
 # Eixos e limites
 plt.xlim(0, x_max)
 plt.ylim(0, y_max)
-plt.xlabel('Quantidade de Tomates (em quilos)')
-plt.ylabel('Quantidade de Alfaces (em quilos)')
+plt.xlabel("Quantidade de Tomates (em quilos)")
+plt.ylabel("Quantidade de Alfaces (em quilos)")
 
 # Adicionando título e legenda
-plt.title('Solução Gráfica para o Problema de Otimização da Produção na Fazenda (Sem Restrição de Espaço)')
+plt.title(
+    "Solução Gráfica para o Problema de Otimização da Produção na Fazenda (Sem Restrição de Espaço)"
+)
 plt.legend()
 
 # Mostrar gráfico
@@ -427,29 +463,28 @@ y_max = 4000  # Máximo para Alfaces (em quilos)
 x = np.linspace(0, x_max, 400)
 
 # Restrições
-y1 = (5900 - 3*x) / 2  # Restrição de Água para Alfaces
-y2 = (5400 - 2*x) / 3  # Restrição de Espaço
-y3 = 10*x              # Restrição de Diversificação (Tomates pelo menos 10% de Alfaces)
-y4 = 3000 - x        # Correção da restrição ambiental
+y1 = (5900 - 3 * x) / 2  # Restrição de Água para Alfaces
+y2 = (5400 - 2 * x) / 3  # Restrição de Espaço
+y3 = 10 * x  # Restrição de Diversificação (Tomates pelo menos 10% de Alfaces)
+y4 = 3000 - x  # Correção da restrição ambiental
 
 plt.figure(figsize=(10, 8))
 
 # Linhas de restrição
-plt.plot(x, y1, label='Restrição de Água', color='blue')
-plt.plot(x, y2, label='Restrição de Espaço', color='green')
-plt.plot(x, y3, label='Restrição de Diversificação', color='red')
-plt.plot(x, y4, label='Nova Restrição Ambiental', color='purple')
-
+plt.plot(x, y1, label="Restrição de Água", color="blue")
+plt.plot(x, y2, label="Restrição de Espaço", color="green")
+plt.plot(x, y3, label="Restrição de Diversificação", color="red")
+plt.plot(x, y4, label="Nova Restrição Ambiental", color="purple")
 
 
 # Eixos e limites
 plt.xlim(0, x_max)
 plt.ylim(0, y_max)
-plt.xlabel('Quantidade de Tomates (em quilos)')
-plt.ylabel('Quantidade de Alfaces (em quilos)')
+plt.xlabel("Quantidade de Tomates (em quilos)")
+plt.ylabel("Quantidade de Alfaces (em quilos)")
 
 # Adicionando título e legenda
-plt.title('Solução Gráfica para o Problema de Otimização da Produção na Fazenda')
+plt.title("Solução Gráfica para o Problema de Otimização da Produção na Fazenda")
 plt.legend()
 
 # Mostrar gráfico
@@ -508,7 +543,6 @@ Primeiro precisamos instalar o Pyomo e GLPK.
 """
 
 
-
 """Para instalar o GLPK no Google Colab, usamos comandos de linha de comando do Linux, já que o Colab é baseado em uma máquina virtual Linux. O comando específico para instalar o GLPK é:"""
 
 
@@ -523,12 +557,20 @@ modelo.x_tomate = pyo.Var(domain=pyo.NonNegativeReals)
 modelo.x_alface = pyo.Var(domain=pyo.NonNegativeReals)
 
 # Definindo a função objetivo
-modelo.lucro = pyo.Objective(expr=2*modelo.x_tomate + 1.5*modelo.x_alface, sense=pyo.maximize)
+modelo.lucro = pyo.Objective(
+    expr=2 * modelo.x_tomate + 1.5 * modelo.x_alface, sense=pyo.maximize
+)
 
 # Adicionando as restrições
-modelo.restricao_agua = pyo.Constraint(expr=3*modelo.x_tomate + 2*modelo.x_alface <= 5900)
-modelo.restricao_espaco = pyo.Constraint(expr=2*modelo.x_tomate + 3*modelo.x_alface <= 5400)
-modelo.restricao_diversificacao = pyo.Constraint(expr=modelo.x_tomate >= 0.1*modelo.x_alface)
+modelo.restricao_agua = pyo.Constraint(
+    expr=3 * modelo.x_tomate + 2 * modelo.x_alface <= 5900
+)
+modelo.restricao_espaco = pyo.Constraint(
+    expr=2 * modelo.x_tomate + 3 * modelo.x_alface <= 5400
+)
+modelo.restricao_diversificacao = pyo.Constraint(
+    expr=modelo.x_tomate >= 0.1 * modelo.x_alface
+)
 
 """## Vídeo 4.2
 
@@ -538,7 +580,7 @@ O código a seguir representa a etapa de resolução do nosso modelo:
 """
 
 # Resolvendo o modelo
-solver = pyo.SolverFactory('glpk')
+solver = pyo.SolverFactory("glpk")
 resultado = solver.solve(modelo, tee=True)
 
 """**Interpretação do Log do GLPK**
@@ -637,17 +679,17 @@ Podemos implementar isso da seguinte forma:
 import pyomo.environ as pyo
 
 # Dados do problema
-alimentos = ['Tomate', 'Alface', 'Cenoura', 'Batata']
-recursos = ['agua', 'espaco']
+alimentos = ["Tomate", "Alface", "Cenoura", "Batata"]
+recursos = ["agua", "espaco"]
 
-lucro_por_alimento = {'Tomate': 2.00, 'Alface': 1.50, 'Cenoura': 1.80, 'Batata': 1.20}
+lucro_por_alimento = {"Tomate": 2.00, "Alface": 1.50, "Cenoura": 1.80, "Batata": 1.20}
 demanda_por_alimento = {
-    'Tomate': {'agua': 3, 'espaco': 2},
-    'Alface': {'agua': 2, 'espaco': 1},
-    'Cenoura': {'agua': 4, 'espaco': 3},
-    'Batata': {'agua': 5, 'espaco': 2.5}
+    "Tomate": {"agua": 3, "espaco": 2},
+    "Alface": {"agua": 2, "espaco": 1},
+    "Cenoura": {"agua": 4, "espaco": 3},
+    "Batata": {"agua": 5, "espaco": 2.5},
 }
-disponibilidade_recursos = {'agua': 20000, 'espaco': 10000}
+disponibilidade_recursos = {"agua": 20000, "espaco": 10000}
 
 # Modelo
 modelo = pyo.ConcreteModel()
@@ -656,23 +698,29 @@ modelo = pyo.ConcreteModel()
 modelo.x = pyo.Var(alimentos, domain=pyo.NonNegativeReals)
 
 # Função objetivo
-modelo.lucro = pyo.Objective(expr=sum(lucro_por_alimento[i] * modelo.x[i] for i in alimentos), sense=pyo.maximize)
+modelo.lucro = pyo.Objective(
+    expr=sum(lucro_por_alimento[i] * modelo.x[i] for i in alimentos), sense=pyo.maximize
+)
 
 # Restrições
 for r in recursos:
-    modelo.add_component(f'restricao_{r}',
-                         pyo.Constraint(expr=sum(demanda_por_alimento[i][r] * modelo.x[i] for i in alimentos) <= disponibilidade_recursos[r]))
+    modelo.add_component(
+        f"restricao_{r}",
+        pyo.Constraint(
+            expr=sum(demanda_por_alimento[i][r] * modelo.x[i] for i in alimentos)
+            <= disponibilidade_recursos[r]
+        ),
+    )
 
 # Resolver o modelo
 # Force o solver a ser o GLPK e aponte o executável correto
-solver = pyo.SolverFactory('glpk', executable='/usr/bin/glpsol')
+solver = pyo.SolverFactory("glpk", executable="/usr/bin/glpsol")
 resultado = solver.solve(modelo, tee=True)
 
 # Imprimir resultados
 for alimento in alimentos:
     print(f"Produção de {alimento}: {pyo.value(modelo.x[alimento])} kg")
 print(f"Lucro total: R$ {pyo.value(modelo.lucro)}")
-
 
 
 # Criando um modelo concreto
@@ -683,14 +731,22 @@ modelo.x_tomate = pyo.Var(domain=pyo.NonNegativeReals)
 modelo.x_alface = pyo.Var(domain=pyo.NonNegativeReals)
 
 # Definindo a função objetivo
-modelo.lucro = pyo.Objective(expr=2*modelo.x_tomate + 1.5*modelo.x_alface, sense=pyo.maximize)
+modelo.lucro = pyo.Objective(
+    expr=2 * modelo.x_tomate + 1.5 * modelo.x_alface, sense=pyo.maximize
+)
 
 # Adicionando as restrições
-modelo.restricao_agua = pyo.Constraint(expr=3*modelo.x_tomate + 2*modelo.x_alface <= 5900)
-modelo.restricao_espaco = pyo.Constraint(expr=2*modelo.x_tomate + 3*modelo.x_alface <= 5400)
-modelo.restricao_diversificacao = pyo.Constraint(expr=modelo.x_tomate >= 0.1*modelo.x_alface)
+modelo.restricao_agua = pyo.Constraint(
+    expr=3 * modelo.x_tomate + 2 * modelo.x_alface <= 5900
+)
+modelo.restricao_espaco = pyo.Constraint(
+    expr=2 * modelo.x_tomate + 3 * modelo.x_alface <= 5400
+)
+modelo.restricao_diversificacao = pyo.Constraint(
+    expr=modelo.x_tomate >= 0.1 * modelo.x_alface
+)
 
-solver = pyo.SolverFactory('glpk', executable='/usr/bin/glpsol')
+solver = pyo.SolverFactory("glpk", executable="/usr/bin/glpsol")
 resultado = solver.solve(modelo, tee=True)
 
 """Após resolver o modelo, podemos verificar as folgas nas restrições:"""
@@ -719,43 +775,53 @@ Em resumo, essa análise de sensibilidade fornece uma compreensão profunda dos 
 O objetivo principal deste código é analisar como a variação no coeficiente de lucro por unidade de tomate afeta o lucro total obtido, bem como as quantidades ótimas de tomates e alfaces a serem plantadas, dentro de um contexto de otimização linear. Utilizando a biblioteca Pyomo para modelagem, o código define um problema de otimização que maximiza o lucro total das vendas de tomates e alfaces, sujeito a restrições de recursos como água e espaço disponível, além de uma restrição de diversificação que exige que a quantidade de tomates plantados seja pelo menos uma fração da quantidade de alfaces. Através da função `criar_modelo`, o código é capaz de construir e resolver esse problema de otimização para diferentes coeficientes de lucro por unidade de tomate, permitindo uma análise detalhada de como esse parâmetro influencia a decisão de plantio ótima.
 """
 
+
 def criar_modelo(coef_tomate):
-  modelo = pyo.ConcreteModel()
+    modelo = pyo.ConcreteModel()
 
-  modelo.x_tomate = pyo.Var(domain=pyo.NonNegativeReals)
-  modelo.x_alface = pyo.Var(domain=pyo.NonNegativeReals)
+    modelo.x_tomate = pyo.Var(domain=pyo.NonNegativeReals)
+    modelo.x_alface = pyo.Var(domain=pyo.NonNegativeReals)
 
-  modelo.lucro = pyo.Objective(expr=coef_tomate*modelo.x_tomate+1.5*modelo.x_alface,sense=pyo.maximize)
+    modelo.lucro = pyo.Objective(
+        expr=coef_tomate * modelo.x_tomate + 1.5 * modelo.x_alface, sense=pyo.maximize
+    )
 
-  modelo.restricao_agua = pyo.Constraint(expr=3*modelo.x_tomate+2*modelo.x_alface <=6000)
-  modelo.restricao_espaco = pyo.Constraint(expr=2*modelo.x_tomate+3*modelo.x_alface <=5500)
-  modelo.restricao_diversificacao = pyo.Constraint(expr=modelo.x_tomate>=0.1*modelo.x_alface)
+    modelo.restricao_agua = pyo.Constraint(
+        expr=3 * modelo.x_tomate + 2 * modelo.x_alface <= 6000
+    )
+    modelo.restricao_espaco = pyo.Constraint(
+        expr=2 * modelo.x_tomate + 3 * modelo.x_alface <= 5500
+    )
+    modelo.restricao_diversificacao = pyo.Constraint(
+        expr=modelo.x_tomate >= 0.1 * modelo.x_alface
+    )
 
-  solver = pyo.SolverFactory('glpk')
-  resultado = solver.solve(modelo,tee=True)
+    solver = pyo.SolverFactory("glpk")
+    resultado = solver.solve(modelo, tee=True)
 
-  return modelo
+    return modelo
 
-solver = pyo.SolverFactory('glpk')
 
-coeficientes_tomate = np.linspace(1.5,2.5,12)
+solver = pyo.SolverFactory("glpk")
+
+coeficientes_tomate = np.linspace(1.5, 2.5, 12)
 
 lucros_otimos = []
 quantidades_tomate = []
 quantidades_alface = []
 
 for coef_tomate in coeficientes_tomate:
-  modelo = criar_modelo(coef_tomate)
-  resultado = solver.solve(modelo,tee=True)
+    modelo = criar_modelo(coef_tomate)
+    resultado = solver.solve(modelo, tee=True)
 
-  lucros_otimos.append(pyo.value(modelo.lucro))
-  quantidades_tomate.append(pyo.value(modelo.x_tomate))
-  quantidades_alface.append(pyo.value(modelo.x_alface))
+    lucros_otimos.append(pyo.value(modelo.lucro))
+    quantidades_tomate.append(pyo.value(modelo.x_tomate))
+    quantidades_alface.append(pyo.value(modelo.x_alface))
 
 """Após a definição e resolução do modelo de otimização para cada coeficiente de lucro de tomate, o código coleta os resultados, incluindo o lucro total obtido e as quantidades ótimas de tomates e alfaces para cada cenário. Esses dados são então utilizados para gerar gráficos que ilustram a relação entre o coeficiente de lucro do tomate e os resultados de interesse: o lucro total e as quantidades ótimas de cada vegetal. Essa análise visual, realizada através da biblioteca matplotlib, fornece insights valiosos sobre a sensibilidade do problema de otimização a variações no lucro unitário do tomate, permitindo uma compreensão mais profunda das dinâmicas de decisão envolvidas na gestão de recursos agrícolas e na maximização de lucros sob restrições específicas."""
 
-plt.plot(coeficientes_tomate,lucros_otimos,'.')
+plt.plot(coeficientes_tomate, lucros_otimos, ".")
 
-plt.plot(coeficientes_tomate,quantidades_tomate,'.')
+plt.plot(coeficientes_tomate, quantidades_tomate, ".")
 
-plt.plot(coeficientes_tomate,quantidades_alface,'.')
+plt.plot(coeficientes_tomate, quantidades_alface, ".")

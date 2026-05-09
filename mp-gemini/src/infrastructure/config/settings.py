@@ -1,8 +1,10 @@
 import os
-from dotenv import load_dotenv, find_dotenv
+
+from dotenv import find_dotenv, load_dotenv
 
 # Carrega o .env da raiz automaticamente
 load_dotenv(find_dotenv())
+
 
 class Settings:
     @property
@@ -22,5 +24,6 @@ class Settings:
         if not value:
             raise ValueError(f"Variável {key} não encontrada no .env!")
         return value
+
 
 settings = Settings()

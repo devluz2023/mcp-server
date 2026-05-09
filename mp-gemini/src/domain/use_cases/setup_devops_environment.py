@@ -1,6 +1,7 @@
 from typing import List
+
 from src.application.ports.git_service_port import GitServicePort
-from src.domain.entities.git_repo import GitRepository, PullRequest
+from src.domain.entities.git_repo import PullRequest
 
 
 class SetupDevOpsEnvironment:
@@ -13,7 +14,9 @@ class SetupDevOpsEnvironment:
         # Injeção de Dependência da Porta (Interface)
         self.git_service = git_service
 
-    def execute(self, repo_name: str, file_path: str, file_content: str) -> List[PullRequest]:
+    def execute(
+        self, repo_name: str, file_path: str, file_content: str
+    ) -> List[PullRequest]:
         """
         Executa o fluxo de configuração:
         1. Garante que o repositório existe
@@ -27,21 +30,16 @@ class SetupDevOpsEnvironment:
 
         # 2. Configurar GitFlow (Branches de ciclo de vida)
         # Criamos a partir da 'main'
-        branches_projeto = ['dev', 'qas', 'prod']
+        branches_projeto = ["dev", "qas", "prod"]
         for branch in branches_projeto:
             self.git_service.create_branch(
-                repo_id=repo.id,
-                branch_name=branch,
-                source_branch='main'
+                repo_id=repo.id, branch_name=branch, source_branch="main"
             )
 
         # 3. Versionar o arquivo solicitado
         # O conteúdo vem como string, mantendo o Use Case puro de IO de disco
         self.git_service.commit_content(
-            repo_id=repo.id,
-            path=file_path,
-            content=file_content,
-            branch='main'
+            repo_id=repo.id, path=file_path, content=file_content, branch="main"
         )
 
         # 4. Retornar Pull Requests ativos para o dashboard/interface
