@@ -28,3 +28,32 @@ resource "azurerm_databricks_workspace" "this" {
 }
 
 
+
+
+resource "databricks_cluster" "ml_cluster" {
+  cluster_name            = "FABIO DA LUZ's Cluster 2026-05-09"
+  spark_version           = "18.2.x-cpu-ml-scala2.13" # Usando a versão ML efetiva do seu JSON
+  node_type_id            = "Standard_DS3_v2"
+  autotermination_minutes = 4320 # Cuidado: isso são 3 dias ligado! 
+  
+  # Configuração de Single Node (conforme seu spark_conf)
+  spark_conf = {
+    "spark.databricks.cluster.profile" : "singleNode"
+    "spark.master"                     : "local[*, 4]"
+  }
+
+  custom_tags = {
+    "ResourceClass" = "SingleNode"
+  }
+
+  # Azure specific (ON_DEMAND conforme seu JSON)
+  azure_attributes {
+    availability       = "ON_DEMAND_AZURE"
+    first_on_demand    = 1
+    spot_bid_max_price = -1
+  }
+
+  # Segurança e Usuário Único
+  data_security_mode = "SINGLE_USER"
+  single_user_name   = "fabio.jdluz@gmail.com"
+}

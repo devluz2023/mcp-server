@@ -16,15 +16,22 @@ terraform {
         version = "~>3.0"
       }
     
-    # databricks = {
-    #   source = "databricks/databricks"
-    # }
+    databricks = {
+      source  = "databricks/databricks"
+      version = "~> 1.0" 
+    }
   }
 }
 
 provider "azurerm" {
   features {}
-  # A subscription ID pode ser definida via variável de ambiente ARM_SUBSCRIPTION_ID
-  # ou via variável terraform (ver variables.tf)
+
   subscription_id = var.subscription_id
+}
+
+provider "databricks" {
+
+  host = azurerm_databricks_workspace.this.workspace_url
+  
+
 }
