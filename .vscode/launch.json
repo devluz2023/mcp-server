@@ -1,7 +1,19 @@
 {
     "version": "0.2.0",
     "configurations": [
-        
+ 
+        {
+            "name": "Debug Application",
+            "type": "debugpy",
+            "request": "launch",
+            "python": "${workspaceFolder}/mp-gemini/venv/bin/python",
+            "program": "${workspaceFolder}/mp-gemini/app.py", // ADICIONE O CAMINHO DO SEU ARQUIVO PRINCIPAL
+            "cwd": "${workspaceFolder}/mp-gemini",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/mp-gemini" // AJUSTADO PARA ENXERGAR A PASTA SRC
+                },
+            "justMyCode": true
+        },
         {
             "name": "Debug Streamlit (Server1)",
             "type": "debugpy",

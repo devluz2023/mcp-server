@@ -5,6 +5,10 @@ from typing import List
 from databricks.sdk import WorkspaceClient
 from src.application.ports.job_repository import JobRepositoryPort
 from src.domain.entities.job import DatabricksJob
+from dotenv import find_dotenv, load_dotenv
+
+# Carrega as variáveis de ambiente do arquivo .env
+load_dotenv(find_dotenv())
 
 # Configura um logger para avisar que algo falhou sem travar o app
 logger = logging.getLogger(__name__)
