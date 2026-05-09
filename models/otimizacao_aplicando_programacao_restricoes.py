@@ -92,7 +92,6 @@ grade
 
 
 def alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis):
-
     modelo = cp_model.CpModel()
 
     x = {}
@@ -131,7 +130,6 @@ alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis)
 
 
 def alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis):
-
     modelo = cp_model.CpModel()
 
     x = {}
@@ -233,7 +231,6 @@ def descricao_status(status):
 
 
 def alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis):
-
     modelo = cp_model.CpModel()
 
     x = {}
@@ -333,7 +330,6 @@ dias
 
 
 def alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis, dias):
-
     modelo = cp_model.CpModel()
 
     x = {}
@@ -400,7 +396,6 @@ alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis, dias)
 
 
 def alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis, dias):
-
     modelo = cp_model.CpModel()
 
     x = {}
@@ -471,7 +466,6 @@ alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis, dias)
 
 
 def alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis, dias):
-
     modelo = cp_model.CpModel()
 
     x = {}
@@ -588,7 +582,6 @@ alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis, dias)
 
 
 def alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis):
-
     modelo = cp_model.CpModel()
 
     x = {}
@@ -638,7 +631,6 @@ marcas
 
 
 def alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis):
-
     modelo = cp_model.CpModel()
 
     x = {}
@@ -692,7 +684,6 @@ alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis)
 
 
 def alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis):
-
     modelo = cp_model.CpModel()
 
     x = {}

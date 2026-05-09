@@ -9,11 +9,32 @@ from src.infrastructure.llm_gateways.openai_gateway import OpenAIGateway
 if "agent" not in st.session_state:
     gateway = OpenAIGateway(api_key=settings.openai_api_key)
     st.session_state.agent = AgentService(llm_provider=gateway)
+
     azure_adapter = AzureGitAdapter()
     devops_use_case = SetupDevOpsEnvironment(git_service=azure_adapter)
 
 st.set_page_config(page_title="Databricks Assistant", page_icon="🤖")
 st.title("🤖 Assistente Databricks")
+
+st.markdown(
+    """
+    **Comandos Git/DevOps disponíveis:**
+    - listar_repositorios
+    - commit_e_push_arquivo
+    - listar_prs
+    - aprovar_pr
+    - merge_pr
+    - criar_repositorio_gitflow
+
+    Use frases como:
+    - "listar repositórios"
+    - "commitar e dar push de arquivo no repositório X"
+    - "listar PRs do repositório X"
+    - "aprovar PR 123"
+    - "mergear PR 123"
+    - "criar repositório com gitflow para x"
+    """
+)
 
 # Histórico
 if "messages" not in st.session_state:
@@ -24,7 +45,7 @@ for msg in st.session_state.messages:
         st.markdown(msg["content"])
 
 # Input do usuário
-if prompt := st.chat_input("Pergunte algo..."):
+if prompt := st.chat_input("Pergunte algo... Ex: listar repositórios, aprovar PR 123"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)

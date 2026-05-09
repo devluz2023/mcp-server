@@ -427,5 +427,4 @@ def executar_pipeline_csv_para_feature_store():
 
 
 def show_drift():
-
     return drift.run_drift()

@@ -256,7 +256,6 @@ def criar_modelo(
     tempo_maximo,
     num_min_atracoes,
 ):
-
     modelo = pyo.ConcreteModel()
 
     modelo.pontos_turisticos = pyo.Set(initialize=atracoes)
@@ -438,7 +437,6 @@ def criar_modelo_inteiro(
     tempo_maximo,
     num_min_atracoes,
 ):
-
     modelo = pyo.ConcreteModel()
 
     modelo.pontos_turisticos = pyo.Set(initialize=atracoes)
@@ -522,7 +520,6 @@ def criar_modelo_inteiro(
     tempo_maximo,
     num_min_atracoes,
 ):
-
     modelo = pyo.ConcreteModel()
 
     modelo.pontos_turisticos = pyo.Set(initialize=atracoes)
@@ -607,7 +604,6 @@ def criar_modelo_inteiro(
     tempo_maximo,
     num_min_atracoes,
 ):
-
     modelo = pyo.ConcreteModel()
 
     modelo.pontos_turisticos = pyo.Set(initialize=atracoes)
@@ -720,7 +716,6 @@ def criar_modelo_inteiro(
     tempo_maximo,
     num_min_atracoes,
 ):
-
     modelo = pyo.ConcreteModel()
 
     modelo.pontos_turisticos = pyo.Set(initialize=atracoes)
@@ -802,7 +797,6 @@ def criar_modelo_inteiro(
     tempo_maximo,
     num_min_atracoes,
 ):
-
     modelo = pyo.ConcreteModel()
 
     modelo.pontos_turisticos = pyo.Set(initialize=atracoes)
@@ -870,7 +864,6 @@ def criar_modelo_inteiro(
     num_min_atracoes,
     peso_restricao=1000,
 ):
-
     modelo = pyo.ConcreteModel()
 
     modelo.pontos_turisticos = pyo.Set(initialize=atracoes)
@@ -947,7 +940,6 @@ def criar_modelo_inteiro_dias(
     orcamento_diario,
     dias,
 ):
-
     modelo = pyo.ConcreteModel()
 
     modelo.pontos_turisticos = pyo.Set(initialize=atracoes)
@@ -1048,7 +1040,6 @@ def criar_modelo_inteiro_dias(
     orcamento_diario,
     dias,
 ):
-
     modelo = pyo.ConcreteModel()
 
     modelo.pontos_turisticos = pyo.Set(initialize=atracoes)
@@ -1139,7 +1130,6 @@ import random
 
 
 def gerar_parametros(num_atracoes, num_dias):
-
     atracoes = range(1, num_atracoes)
     dias = range(1, num_dias + 1)
 

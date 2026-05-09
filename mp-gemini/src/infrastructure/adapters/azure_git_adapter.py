@@ -8,6 +8,7 @@ from azure.devops.v7_1.git.models import (
     GitPullRequestCompletionOptions,
     GitPullRequestSearchCriteria,
 )
+from dotenv import find_dotenv, load_dotenv
 from msrest.authentication import BasicAuthentication
 from src.application.ports.git_service_port import GitServicePort
 from src.domain.entities.git_repo import GitRepository, PullRequest
@@ -17,12 +18,16 @@ logger = logging.getLogger(__name__)
 
 class AzureGitAdapter(GitServicePort):
     def __init__(self):
+        load_dotenv(find_dotenv())
+
         self.pat = os.getenv("PERSONAL_ACCESS_TOKEN")
         self.org_url = os.getenv("ORGANIZATION_URL")
         self.project = os.getenv("PROJECT_NAME")
 
         if not all([self.pat, self.org_url, self.project]):
-            raise ValueError("Credenciais Azure DevOps não configuradas no .env")
+            raise ValueError(
+                "Credenciais Azure DevOps não configuradas no .env: verifique PERSONAL_ACCESS_TOKEN, ORGANIZATION_URL e PROJECT_NAME"
+            )
 
         credentials = BasicAuthentication("", self.pat)
         self.connection = Connection(base_url=self.org_url, creds=credentials)
@@ -47,6 +52,17 @@ class AzureGitAdapter(GitServicePort):
             repo = self.client.create_repository({"name": name}, project=self.project)
 
         return GitRepository(id=repo.id, name=repo.name)
+
+    def get_repo(self, name: str) -> GitRepository | None:
+        try:
+            repo = self.client.get_repository(repository_id=name, project=self.project)
+            return GitRepository(id=repo.id, name=repo.name)
+        except AzureDevOpsServiceError:
+            return None
+
+    def list_repos(self) -> list[GitRepository]:
+        repositories = self.client.get_repositories(project=self.project)
+        return [GitRepository(id=r.id, name=r.name) for r in repositories]
 
     def create_branch(
         self, repo_id: str, branch_name: str, source_branch: str = "main"
@@ -81,7 +97,9 @@ class AzureGitAdapter(GitServicePort):
             logger.error(f"Erro ao criar branch {branch_name}: {e}")
             return False
 
-    def commit_file(self, repo_id: str, path: str, content: str, branch: str) -> bool:
+    def commit_content(
+        self, repo_id: str, path: str, content: str, branch: str
+    ) -> bool:
         try:
             # Tenta obter o SHA atual da branch para o push
             ref_name = f"heads/{branch}"
@@ -153,8 +171,19 @@ class AzureGitAdapter(GitServicePort):
             logger.error(f"Erro ao votar no PR {pr_id}: {e}")
             return False
 
-    def merge_pr(self, repo_id: str, pr_id: int, source_commit: str) -> bool:
+    def merge_pr(self, repo_id: str, pr_id: int) -> bool:
         try:
+            pr = self.client.get_pull_request(
+                pull_request_id=pr_id,
+                repository_id=repo_id,
+                project=self.project,
+            )
+
+            source_commit = getattr(pr.last_merge_source_commit, "commit_id", None)
+            if not source_commit:
+                logger.error(f"Commit de origem não encontrado para PR {pr_id}")
+                return False
+
             options = GitPullRequestCompletionOptions(
                 delete_source_branch=True, squash_merge=True
             )

@@ -1,9 +1,11 @@
+# .pre-commit-config.yaml
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.4  # Versão do Ruff
+    rev: v0.4.4
     hooks:
-      # Este gancho limpa imports não usados e organiza a ordem deles
       - id: ruff
         args: [ --fix ]
-      # Este gancho cuida da indentação e formatação visual (estilo Black)
+        # Aplica apenas arquivos dentro da pasta mp-gemini
+        files: ^mp-gemini/
       - id: ruff-format
+        files: ^mp-gemini/

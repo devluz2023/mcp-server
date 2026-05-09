@@ -1,11 +1,18 @@
 import os
 
 from langchain_core.tools import tool
+from src.domain.use_cases.git_repository_use_case import GitRepositoryUseCase
+from src.domain.use_cases.setup_devops_environment import SetupDevOpsEnvironment
+from src.infrastructure.adapters.azure_git_adapter import AzureGitAdapter
 from src.infrastructure.repositories.databricks_job_repository import (
     DatabricksJobRepository,
 )
 
 db = DatabricksJobRepository()
+
+git_adapter = AzureGitAdapter()
+git_use_case = GitRepositoryUseCase(git_service=git_adapter)
+setup_devops_use_case = SetupDevOpsEnvironment(git_service=git_adapter)
 
 
 @tool
@@ -79,6 +86,98 @@ def listar_modelos() -> str:
     return "\n".join([f for f in os.listdir(models_dir) if f.endswith(".py")])
 
 
+@tool
+def listar_repositorios() -> str:
+    """Lista repositórios no Azure DevOps"""
+    repos = git_use_case.list_repositories()
+    if not repos:
+        return "Nenhum repositório encontrado."
+    return "\n".join([f"- {repo.name} (ID: {repo.id})" for repo in repos])
+
+
+@tool
+def commit_e_push_arquivo(
+    repo_name: str, arquivo: str, conteudo: str, branch: str = "main"
+) -> str:
+    """Faz commit e push de um arquivo para o repositório especificado."""
+    success = git_use_case.commit_and_push(repo_name, arquivo, conteudo, branch)
+    if not success:
+        return f"Falha ao commitar/push no repositório '{repo_name}' branch '{branch}'."
+    return f"Commit e push realizados com sucesso em '{repo_name}' branch '{branch}'."
+
+
+@tool
+def listar_prs(repo_name: str) -> str:
+    """Lista Pull Requests ativos para um repositório."""
+    try:
+        prs = git_use_case.list_active_pull_requests(repo_name)
+    except ValueError as exc:
+        return str(exc)
+
+    if not prs:
+        return f"Nenhum Pull Request ativo encontrado em '{repo_name}'."
+    lines = [
+        f"- PR #{pr.id}: {pr.title} | {pr.source_branch} → {pr.target_branch} | {pr.status}"
+        for pr in prs
+    ]
+    return "\n".join(lines)
+
+
+@tool
+def aprovar_pr(repo_name: str, pr_id: int) -> str:
+    """Aprova um Pull Request existente."""
+    try:
+        approved = git_use_case.approve_pull_request(repo_name, pr_id)
+    except ValueError as exc:
+        return str(exc)
+    return (
+        f"PR #{pr_id} aprovado com sucesso."
+        if approved
+        else f"Falha ao aprovar PR #{pr_id}."
+    )
+
+
+@tool
+def merge_pr(repo_name: str, pr_id: int) -> str:
+    """Faz merge de um Pull Request existente."""
+    try:
+        merged = git_use_case.merge_pull_request(repo_name, pr_id)
+    except ValueError as exc:
+        return str(exc)
+    return (
+        f"PR #{pr_id} mergeada com sucesso."
+        if merged
+        else f"Falha ao mergear PR #{pr_id}."
+    )
+
+
+@tool
+def criar_repositorio_gitflow(
+    repo_name: str,
+    initial_file: str = "README.md",
+    content: str = "# Repositório criado com GitFlow (main, dev, qas, prod)\n",
+) -> str:
+    """Cria um repositório e configura GitFlow com branches dev, qas e prod."""
+    try:
+        prs = setup_devops_use_case.execute(
+            repo_name=repo_name,
+            file_path=initial_file,
+            file_content=content,
+        )
+    except Exception as exc:
+        return f"Falha ao criar repositório GitFlow: {exc}"
+
+    if prs:
+        return (
+            f"Repositório '{repo_name}' criado com GitFlow e branches dev/qas/prod. "
+            f"{len(prs)} PRs ativos encontrados."
+        )
+
+    return (
+        f"Repositório '{repo_name}' criado com GitFlow com sucesso e nenhum PR ativo."
+    )
+
+
 # =========================
 # TOOL REGISTRY (IMPORTANTE)
 # =========================
@@ -94,4 +193,10 @@ tools = {
     "pipeline_databricks": pipeline_databricks,
     "bundle_job_yaml": bundle_job_yaml,
     "show_drift": show_drift,
+    "listar_repositorios": listar_repositorios,
+    "commit_e_push_arquivo": commit_e_push_arquivo,
+    "listar_prs": listar_prs,
+    "aprovar_pr": aprovar_pr,
+    "merge_pr": merge_pr,
+    "criar_repositorio_gitflow": criar_repositorio_gitflow,
 }

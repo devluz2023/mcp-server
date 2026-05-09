@@ -15,32 +15,50 @@ class SetupDevOpsEnvironment:
         self.git_service = git_service
 
     def execute(
-        self, repo_name: str, file_path: str, file_content: str
+        self,
+        repo_name: str,
+        file_path: str = "README.md",
+        file_content: str = "# Repositório criado com GitFlow (main, dev, qas, prod)\n",
     ) -> List[PullRequest]:
         """
         Executa o fluxo de configuração:
         1. Garante que o repositório existe
-        2. Cria a estrutura de branches (dev, qas, prod)
-        3. Realiza o commit do arquivo inicial
+        2. Cria o commit inicial em main
+        3. Cria a estrutura de branches (dev, qas, prod)
         4. Lista os PRs ativos para validação
         """
 
         # 1. Garantir Repositório
         repo = self.git_service.get_or_create_repo(repo_name)
 
-        # 2. Configurar GitFlow (Branches de ciclo de vida)
-        # Criamos a partir da 'main'
-        branches_projeto = ["dev", "qas", "prod"]
-        for branch in branches_projeto:
-            self.git_service.create_branch(
-                repo_id=repo.id, branch_name=branch, source_branch="main"
+        # 2. Commit inicial em main para permitir criação de branches GitFlow
+        created = self.git_service.commit_content(
+            repo_id=repo.id,
+            path=file_path,
+            content=file_content,
+            branch="main",
+        )
+        if not created:
+            raise RuntimeError(
+                f"Falha ao criar commit inicial em main para o repositório '{repo_name}'."
             )
 
-        # 3. Versionar o arquivo solicitado
-        # O conteúdo vem como string, mantendo o Use Case puro de IO de disco
-        self.git_service.commit_content(
-            repo_id=repo.id, path=file_path, content=file_content, branch="main"
-        )
+        # 3. Configurar GitFlow (branches de ciclo de vida)
+        branches_projeto = ["dev", "qas", "prod"]
+        created_branches = []
+        for branch in branches_projeto:
+            created_branches.append(
+                self.git_service.create_branch(
+                    repo_id=repo.id,
+                    branch_name=branch,
+                    source_branch="main",
+                )
+            )
+
+        if not all(created_branches):
+            raise RuntimeError(
+                f"Falha ao criar branches GitFlow para o repositório '{repo_name}'."
+            )
 
         # 4. Retornar Pull Requests ativos para o dashboard/interface
         return self.git_service.list_active_prs(repo.id)
