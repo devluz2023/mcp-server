@@ -104,11 +104,10 @@ df = pd.DataFrame(
 )
 df.head()  # Visualizando as primeiras linhas do DataFrame/
 
-"""Podemos checar as combinações que não violam algum restrição:"""
+
 
 df.query("viola_restricoes == False")
 
-"""Podemos selecionar a melhor solução:"""
 
 row_index = df.query("viola_restricoes == False")["lucro"].idxmax()
 df.loc[row_index]
@@ -419,7 +418,7 @@ modelo.restricao_diversificacao = pyo.Constraint(
 solver = pyo.SolverFactory("glpk", executable="/usr/bin/glpsol")
 resultado = solver.solve(modelo, tee=True)
 
-"""Após resolver o modelo, podemos verificar as folgas nas restrições:"""
+
 
 # Exibindo as folgas das restrições
 agua_folga = modelo.restricao_agua.slack()

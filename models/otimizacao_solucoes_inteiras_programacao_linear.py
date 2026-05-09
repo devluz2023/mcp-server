@@ -174,7 +174,7 @@ modelo.restr_tempo = pyo.Constraint(
 solver = pyo.SolverFactory("glpk")
 resultado = solver.solve(modelo, tee=True)
 
-"""Com o modelo resolvido, podemos imprimir na tela a resolução."""
+
 
 print(f"Função objetivo: {pyo.value(modelo.obj)}")
 
@@ -183,12 +183,7 @@ for atracao in atracoes:
     if valor > 0:
         print(f"{atracao}: Visitado = {valor}")
 
-"""## Preparação para busca por soluções inteiras
 
-Antes de buscar estratégias para o modelo sempre retornar 0 ou 1, é necessário criar funções para facilitar os testes. Essas funções permitirão que executemos o modelo rapidamente e analisemos os resultados de forma mais eficiente.
-
- A função `criar_modelo()` cria um novo modelo de programação linear com as variáveis de decisão, a função objetivo e as restrições definidas anteriormente. A função `resolver_modelo()` resolve o modelo e imprime na tela a solução
-"""
 
 
 def criar_modelo(
@@ -272,22 +267,7 @@ modelo = criar_modelo(
 )
 resolver_modelo(modelo)
 
-"""Com essas funções, podemos criar estratégias para obter soluções que sejam sempre 0 ou 1. No entanto, às vezes, obtemos resultados que não estão exatamente em 0 ou 1, mas estão próximos, como o valor ótimo de 0.5. Nesses casos, é importante aplicar restrições adicionais para forçar as variáveis a se aproximarem de 0 ou 1, dependendo do objetivo do problema.
 
-Por exemplo, a atração "Jardim de Luxemburgo" teve seu valor ótimo de 0.5, podemos melhorar o modelo ao aplicar as seguintes restrições:
-
-1. Restrição para Forçar a Variável a ser Menor ou Igual a 0:
-   - Podemos adicionar uma restrição que diz que a variável "Jardim de Luxemburgo" deve ser menor ou igual a 0. Isso significa que a atração "Jardim de Luxemburgo" não pode ser escolhida, ou seja, deve ser 0 ou próxima de 0.
-
-2. Restrição para Forçar a Variável a ser Maior ou Igual a 1:
-   - Por outro lado, podemos reotimizar o modelo com uma nova restrição que diz que a variável "Jardim de Luxemburgo" deve ser maior ou igual a 1. Isso significa que a atração "Jardim de Luxemburgo" deve ser escolhida com certeza, ou seja, deve ser 1 ou próxima de 1.
-
-Essas abordagens permitem que ajustemos o modelo de otimização para se adequar melhor às nossas necessidades, forçando as variáveis a se aproximarem de 0 ou 1, dependendo do contexto do problema.
-
-```
-{"Jardim de Luxemburgo": {'valor': 0, 'sinal':'<='}}
-```
-"""
 
 
 def adicionar_restricoes(modelo, condicoes):
@@ -360,16 +340,7 @@ condicoes = {"Jardim de Luxemburgo": {"valor": 1, "sinal": ">="}}
 adicionar_restricoes(modelo, condicoes)
 resolver_modelo(modelo)
 
-"""No nosso processo de otimização, estamos seguindo uma abordagem iterativa na qual adicionamos restrições ao nosso modelo de programação linear com o objetivo de determinar em que ponto todas as variáveis do modelo assumem valores inteiros. É importante destacar que, nesse processo, começamos por ramificar em uma variável específica que inicialmente possuía um valor de 0,5 (ou seja, uma fração). No entanto, poderíamos ter escolhido outra variável para iniciar o processo de ramificação.
 
-A ideia central é identificar quais restrições podem ser adicionadas ao modelo para forçar a solução a se tornar inteira.
-
-Essa abordagem de busca que utilizamos é conhecida como 'branch and bound' (ramificação e limite). Basicamente, ela envolve a construção de uma árvore de possibilidades, na qual adicionamos restrições a cada nível da árvore até que obtenhamos uma solução inteira. Em seguida, comparamos essa solução com as soluções previamente buscadas.
-
-A pergunta que surge é: será que precisamos realizar esse processo manualmente?
-
-## Variáveis Binárias
-"""
 
 
 def criar_modelo_inteiro(

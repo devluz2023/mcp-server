@@ -49,7 +49,7 @@ else:
 
 grade
 
-"""## Modelo de programação por restrições"""
+
 
 from ortools.sat.python import cp_model
 
@@ -88,7 +88,7 @@ else:
 
 grade
 
-"""## Restrição exatamente um ("ExactlyOne")"""
+
 
 
 def alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis):
@@ -382,7 +382,7 @@ def alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis, dias):
 
 alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis, dias)
 
-"""## Considerando os anunciantes presentes em pelo menos um dia"""
+
 
 
 def alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis, dias):
@@ -452,7 +452,7 @@ def alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis, dias):
 
 alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis, dias)
 
-"""## Utilizando o equilíbrio absoluto de visibilidade"""
+
 
 
 def alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis, dias):
@@ -565,10 +565,7 @@ def alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis, dias):
 
 alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis, dias)
 
-"""# Restrições avançadas e restrições globais
 
-## Restrições de implicação e negação
-"""
 
 
 def alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis):
@@ -613,8 +610,7 @@ def alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis):
 
 alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis)
 
-"""## Método "OnlyEnforceIf"
-"""
+
 
 marcas = list(dados_visibilidade.keys())
 marcas
@@ -669,8 +665,6 @@ def alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis):
 
 alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis)
 
-"""## Restrição "AllDifferent"
-"""
 
 
 def alocar_anunciante_cp(dados_visibilidade, slots_tempo_disponiveis):
