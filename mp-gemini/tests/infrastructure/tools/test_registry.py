@@ -1,6 +1,6 @@
-import pytest
 from src.interfaces.tools.agent_tools import initialize_tools, get_tools
 from unittest.mock import MagicMock
+
 
 def test_initialize_tools_registers_correctly():
     """
@@ -12,7 +12,7 @@ def test_initialize_tools_registers_correctly():
 
     # Executa a inicialização
     initialize_tools(mock_git_uc, mock_job_uc)
-    
+
     # Obtém o registro
     tools_dict = get_tools()
 
@@ -21,6 +21,7 @@ def test_initialize_tools_registers_correctly():
     assert "criar_branch_ml" in tools_dict
     assert "listar_jobs_databricks" in tools_dict
     print("\n✅ Teste de registro de ferramentas passou!")
+
 
 def test_get_tools_returns_dict():
     """

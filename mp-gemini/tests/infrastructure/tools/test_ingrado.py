@@ -10,6 +10,7 @@ from src.interfaces.tools.agent_tools import initialize_tools
 from src.infrastructure.adapters.git_adapter import GitAdapter
 from src.infrastructure.adapters.job_adapter import JobAdapter
 
+
 def test_bootstrap_initialization_replicating_logic():
     """
     Testa o bootstrap garantindo que o AgentService aceite o llm_provider
@@ -19,7 +20,7 @@ def test_bootstrap_initialization_replicating_logic():
 
     try:
         # A. Inicializa Infra (Ollama no lugar da OpenAI)
-        gateway = OllamaGateway() 
+        gateway = OllamaGateway()
         azure_adapter = GitAdapter()
         db_adapter = JobAdapter()
 
@@ -34,7 +35,7 @@ def test_bootstrap_initialization_replicating_logic():
         # D. Inicializa o Maestro (AgentService)
         # Aqui replicamos a sua chamada: AgentService(llm_provider=gateway)
         agent = AgentService(llm_provider=gateway)
-        
+
         # Validação de sanidade: o objeto foi criado?
         assert agent is not None
         print("✅ Passo D concluído: AgentService instanciado com llm_provider.")
@@ -44,7 +45,7 @@ def test_bootstrap_initialization_replicating_logic():
         # (Usando mock para não esperar o processamento real do LLM no bootstrap)
         agent.process_message = MagicMock(return_value="Resposta teste")
         resultado = agent.process_message("Olá")
-        
+
         assert resultado == "Resposta teste"
         print("🚀 Bootstrap validado com sucesso!")
 
@@ -52,6 +53,7 @@ def test_bootstrap_initialization_replicating_logic():
         pytest.fail(f"❌ Erro de assinatura (Parâmetro incorreto): {e}")
     except Exception as e:
         pytest.fail(f"❌ Erro na lógica de inicialização: {e}")
+
 
 if __name__ == "__main__":
     test_bootstrap_initialization_replicating_logic()
