@@ -109,8 +109,14 @@ class JobAdapter(JobInterface):
     def criar_dashboard_padrao(self) -> str:
         try:
             base_dir = os.path.dirname(os.path.abspath(__file__))
+
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            # Caminho relativo de src/infrastructure/adapters para a raiz é ../../../
+        
+
+
             caminho = os.path.join(
-                base_dir, "..", "dashboard", "agent_monitoring_dashboard.lvdash.json"
+                base_dir,  "..", "..", "..", "..", "dashboard", "agent_monitoring_dashboard.lvdash.json"
             )
 
             if not os.path.exists(caminho):
