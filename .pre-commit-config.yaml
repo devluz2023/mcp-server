@@ -1,11 +1,11 @@
-# # .pre-commit-config.yaml
-# repos:
-#   - repo: https://github.com/astral-sh/ruff-pre-commit
-#     rev: v0.4.4
-#     hooks:
-#       - id: ruff
-#         args: [ --fix ]
-#         # Aplica apenas arquivos dentro da pasta mp-gemini
-#         files: ^mp-gemini/
-#       - id: ruff-format
-#         files: ^mp-gemini/
+# .pre-commit-config.yaml
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4
+    hooks:
+      - id: ruff
+        args: [ --fix ]
+        # Aplica apenas arquivos dentro da pasta mp-gemini
+        files: ^mp-gemini/
+      - id: ruff-format
+        files: ^mp-gemini/
