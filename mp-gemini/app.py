@@ -1,4 +1,4 @@
-import app as st
+import streamlit as st  # CORRETO
 
 # 1. Configurações
 from config import settings
