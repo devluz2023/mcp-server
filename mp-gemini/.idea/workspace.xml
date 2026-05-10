@@ -5,26 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="094919ca-df01-4542-aa29-fd0688ce1f1a" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/reproduce_issue.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../databricks_ops.py" beforeDir="false" afterPath="$PROJECT_DIR$/../databricks_ops.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../drift.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../mcp_server.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/mp-gemini.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/mp-gemini.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/application/use_cases/git_automation.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/application/use_cases/git_automation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/application/use_cases/job_automation.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/application/use_cases/job_automation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/domain/repositories/git_repository.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/domain/repositories/git_repository.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/domain/repositories/job_repository.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/domain/repositories/job_repository.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/domain/services/agent_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/domain/services/agent_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/infrastructure/adapters/git_adapter.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/infrastructure/adapters/git_adapter.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/infrastructure/adapters/job_adapter.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/infrastructure/adapters/job_adapter.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/interfaces/tools/agent_tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/interfaces/tools/agent_tools.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/domain/test_listar_jobs.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/domain/test_listar_jobs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/infrastructure/tools/test_registry.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/infrastructure/tools/test_registry.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -134,7 +118,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1778418208754</updated>
-      <workItem from="1778418211041" duration="2736000" />
+      <workItem from="1778418211041" duration="4015000" />
     </task>
     <servers />
   </component>

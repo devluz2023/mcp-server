@@ -20,6 +20,7 @@ class JobAdapter(JobInterface):
             host=settings.DATABRICKS_HOST, token=settings.DATABRICKS_TOKEN
         )
         self.cluster_id = settings.DATABRICKS_CLUSTER_ID
+        self.warehouse_id = settings.DATABRICKS_WAREHOUSE_ID
 
     def criar_job(self, nome: str) -> str:
         if not self.cluster_id:
@@ -95,7 +96,7 @@ class JobAdapter(JobInterface):
 
         response = self.worskpace.statement_execution.execute_statement(
             statement=query,
-            warehouse_id=self.cluster_id,  # ⚠️ obrigatório
+            warehouse_id=self.warehouse_id,  # ⚠️ obrigatório
         )
 
         # 🔥 pegar resultado

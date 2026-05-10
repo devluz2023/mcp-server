@@ -13,10 +13,10 @@ def initialize_tools(git_uc: GitAutomationUseCase, job_uc: JobAutomationUseCase)
     """
 
     @tool
-    def criar_branch_ml(branch_name: str):
+    def criar_branch_ml(repo_name: str, branch_name: str):
         """Útil para criar uma nova branch de desenvolvimento no Azure DevOps/Git."""
         return git_uc.execute_setup_branch(
-            repo_name="mcp-server", branch_name=branch_name
+            repo_name=repo_name, branch_name=branch_name
         )
 
     @tool
@@ -27,7 +27,15 @@ def initialize_tools(git_uc: GitAutomationUseCase, job_uc: JobAutomationUseCase)
     @tool
     def listar_repositorios_azure(dummy_arg: str = ""):
         """Lista todos os repositórios disponíveis no projeto do Azure DevOps."""
-        return git_uc.list_repositories()
+        repos = git_uc.list_repositories()
+        if not repos:
+            return "📂 Nenhum repositório encontrado no projeto."
+
+        lista_formatada = "\n".join([
+            f"📁 **Nome:** {r.name} | **ID:** {r.id}"
+            for r in repos
+        ])
+        return f"🚀 **Lista de Repositórios no Azure DevOps:**\n{lista_formatada}"
 
     @tool
     def listar_jobs_databricks(dummy_arg: str = ""):
@@ -84,9 +92,33 @@ def initialize_tools(git_uc: GitAutomationUseCase, job_uc: JobAutomationUseCase)
         """Cria dashboard Lakeview para monitorar o agente."""
         return job_uc.criar_dashboard_padrao()
 
+    @tool
+    def listar_pull_requests_azure(repo_name: str):
+        """Lista todos os Pull Requests ativos em um repositório do Azure DevOps."""
+        prs = git_uc.list_prs(repo_name)
+        if not prs:
+            return f"📂 Nenhum Pull Request ativo encontrado no repositório '{repo_name}'."
+
+        lista_formatada = "\n".join([
+            f"🆔 **ID:** {p.id} | **Título:** {p.title} | **Status:** {p.status} | **De:** {p.source_branch} **Para:** {p.target_branch}"
+            for p in prs
+        ])
+        return f"🚀 **Pull Requests Ativos em '{repo_name}':**\n{lista_formatada}"
+
+    @tool
+    def aprovar_e_mergear_pr(repo_name: str, pr_id: int):
+        """Aprova e faz o merge de um Pull Request no Azure DevOps."""
+        success = git_uc.execute_approve_and_merge(repo_name, pr_id)
+        if success:
+            return f"✅ PR {pr_id} aprovado e mergeado com sucesso no repositório '{repo_name}'."
+        else:
+            return f"❌ Falha ao aprovar ou mergear o PR {pr_id} no repositório '{repo_name}'."
+
     # --- Registro no Dicionário (Mantendo o padrão que funcionava) ---
     _tools_registry["criar_branch_ml"] = criar_branch_ml
     _tools_registry["listar_repositorios_azure"] = listar_repositorios_azure
+    _tools_registry["listar_pull_requests_azure"] = listar_pull_requests_azure
+    _tools_registry["aprovar_e_mergear_pr"] = aprovar_e_mergear_pr
     _tools_registry["listar_jobs_databricks"] = listar_jobs_databricks
     _tools_registry["criar_novo_job"] = criar_novo_job
     _tools_registry["deletar_job_databricks"] = deletar_job_databricks

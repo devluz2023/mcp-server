@@ -118,9 +118,22 @@ class GitAdapter(GitInterface):
     def list_repositories(self) -> List[GitRepository]:
         try:
             repos = self.git_client.get_repositories(project=self.project_name)
-            return [GitRepository(id=r.id, name=r.name, url=r.web_url) for r in repos]
+
+            if not repos:
+                return []
+
+            return [
+                GitRepository(
+                    id=r.id,
+                    name=r.name,
+                    url=r.web_url,
+                    default_branch=r.default_branch if hasattr(r, "default_branch") else "main"
+                )
+                for r in repos
+            ]
+
         except Exception as e:
-            print(f"Erro ao listar repositórios: {e}")
+            print(f"❌ Erro ao listar repositórios: {str(e)}")
             return []
 
     def get_repo(self, name: str) -> Optional[GitRepository]:
@@ -128,19 +141,36 @@ class GitAdapter(GitInterface):
             repos = self.git_client.get_repositories(project=self.project_name)
             for r in repos:
                 if r.name == name:
-                    return GitRepository(id=r.id, name=r.name, url=r.web_url)
+                    return GitRepository(
+                        id=r.id,
+                        name=r.name,
+                        url=r.web_url,
+                        default_branch=r.default_branch if hasattr(r, "default_branch") else "main"
+                    )
             return None
-        except:
+        except Exception as e:
+            print(f"❌ Erro ao buscar repositório: {str(e)}")
             return None
 
     def list_active_prs(self, repo_id: str) -> List[PullRequest]:
         try:
+            # search_criteria=None traz apenas os ativos por padrão
             prs = self.git_client.get_pull_requests(
                 repository_id=repo_id, search_criteria=None
             )
+            if prs is None:
+                return []
+
             return [
-                PullRequest(id=p.pull_request_id, title=p.title, status=p.status)
+                PullRequest(
+                    id=p.pull_request_id,
+                    title=p.title,
+                    status=p.status,
+                    source_branch=p.source_ref_name.replace("refs/heads/", "") if hasattr(p, "source_ref_name") and p.source_ref_name else "",
+                    target_branch=p.target_ref_name.replace("refs/heads/", "") if hasattr(p, "target_ref_name") and p.target_ref_name else ""
+                )
                 for p in prs
             ]
-        except:
+        except Exception as e:
+            print(f"❌ Erro ao listar PRs (Repo ID: {repo_id}): {str(e)}")
             return []
