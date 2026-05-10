@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 
 from src.application.use_cases.listar_jobs import ListarJobs  # Exemplo de caminho
-from src.domain.entities.job import DatabricksJob
+from src.domain.entities.job import Job
 from src.domain.repositories.job_repository import JobRepositoryPort
 
 
@@ -12,8 +12,8 @@ def test_listar_jobs_deve_retornar_lista_correta():
 
     # Definimos o que o mock deve retornar quando chamado
     mock_repo.list_jobs.return_value = [
-        DatabricksJob(job_id=1, name="Job Teste 1"),
-        DatabricksJob(job_id=2, name="Job Teste 2"),
+        Job(job_id=1, name="Job Teste 1"),
+        Job(job_id=2, name="Job Teste 2"),
     ]
 
     # Injetamos o mock no nosso caso de uso
