@@ -15,9 +15,7 @@ def initialize_tools(git_uc: GitAutomationUseCase, job_uc: JobAutomationUseCase)
     @tool
     def criar_branch_ml(repo_name: str, branch_name: str):
         """Útil para criar uma nova branch de desenvolvimento no Azure DevOps/Git."""
-        return git_uc.execute_setup_branch(
-            repo_name=repo_name, branch_name=branch_name
-        )
+        return git_uc.execute_setup_branch(repo_name=repo_name, branch_name=branch_name)
 
     @tool
     def criar_repositorio(repo_name: str):
@@ -31,10 +29,9 @@ def initialize_tools(git_uc: GitAutomationUseCase, job_uc: JobAutomationUseCase)
         if not repos:
             return "📂 Nenhum repositório encontrado no projeto."
 
-        lista_formatada = "\n".join([
-            f"📁 **Nome:** {r.name} | **ID:** {r.id}"
-            for r in repos
-        ])
+        lista_formatada = "\n".join(
+            [f"📁 **Nome:** {r.name} | **ID:** {r.id}" for r in repos]
+        )
         return f"🚀 **Lista de Repositórios no Azure DevOps:**\n{lista_formatada}"
 
     @tool
@@ -97,12 +94,16 @@ def initialize_tools(git_uc: GitAutomationUseCase, job_uc: JobAutomationUseCase)
         """Lista todos os Pull Requests ativos em um repositório do Azure DevOps."""
         prs = git_uc.list_prs(repo_name)
         if not prs:
-            return f"📂 Nenhum Pull Request ativo encontrado no repositório '{repo_name}'."
+            return (
+                f"📂 Nenhum Pull Request ativo encontrado no repositório '{repo_name}'."
+            )
 
-        lista_formatada = "\n".join([
-            f"🆔 **ID:** {p.id} | **Título:** {p.title} | **Status:** {p.status} | **De:** {p.source_branch} **Para:** {p.target_branch}"
-            for p in prs
-        ])
+        lista_formatada = "\n".join(
+            [
+                f"🆔 **ID:** {p.id} | **Título:** {p.title} | **Status:** {p.status} | **De:** {p.source_branch} **Para:** {p.target_branch}"
+                for p in prs
+            ]
+        )
         return f"🚀 **Pull Requests Ativos em '{repo_name}':**\n{lista_formatada}"
 
     @tool

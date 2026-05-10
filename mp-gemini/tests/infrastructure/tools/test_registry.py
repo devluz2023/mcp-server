@@ -1,42 +1,30 @@
-from src.domain.services.agent_service import AgentService
-from src.infrastructure.services.ollama_gateway import OllamaGateway
+import pytest
+from src.interfaces.tools.agent_tools import initialize_tools, get_tools
+from unittest.mock import MagicMock
 
-
-def test_agent_decision_flow_with_ollama():
+def test_initialize_tools_registers_correctly():
     """
-    Teste de unidade para verificar se o AgentService
-    consegue identificar a intenção de listar jobs.
+    Testa se as ferramentas são registradas no dicionário global.
     """
+    # Criamos Mocks para não precisar de conexão real com Azure/Databricks no teste
+    mock_git_uc = MagicMock()
+    mock_job_uc = MagicMock()
 
-    # 1. Setup: Criamos o Gateway apontando para o seu Ollama local
-    # Certifique-se que o ollama pull qwen2.5-coder:7b foi feito
-    provider = OllamaGateway(model="qwen2.5-coder:7b")
+    # Executa a inicialização
+    initialize_tools(mock_git_uc, mock_job_uc)
+    
+    # Obtém o registro
+    tools_dict = get_tools()
 
-    # 2. Injetamos no serviço
-    service = AgentService(llm_provider=provider)
+    # Asserts (O que o pytest valida)
+    assert len(tools_dict) > 0
+    assert "criar_branch_ml" in tools_dict
+    assert "listar_jobs_databricks" in tools_dict
+    print("\n✅ Teste de registro de ferramentas passou!")
 
-    # 3. Execução: Enviamos um comando que deve disparar uma ferramenta específica
-    prompt = "Pode listar os jobs do Databricks para mim?"
-
-    # O process_message vai:
-    # LLM (Ollama) -> Identifica Tool -> AgentService executa Tool -> Retorna String
-    resposta = service.process_message(prompt)
-
-    # 4. Asserts: Verificamos se o fluxo passou pela lógica esperada
-    assert isinstance(resposta, str)
-    assert len(resposta) > 0
-    print(f"Resultado do teste de unidade: {resposta}")
-
-
-def test_agent_drift_logic():
+def test_get_tools_returns_dict():
     """
-    Verifica se o agente aciona a ferramenta de drift corretamente.
+    Garante que o get_tools retorna um dicionário (para evitar o erro anterior).
     """
-    provider = OllamaGateway(model="qwen2.5-coder:7b")
-    service = AgentService(llm_provider=provider)
-
-    prompt = "Verifique se há drift nos modelos"
-    resposta = service.process_message(prompt)
-
-    # Verificamos se a resposta contém indícios de que a tool foi chamada
-    assert resposta is not None
+    tools = get_tools()
+    assert isinstance(tools, dict)

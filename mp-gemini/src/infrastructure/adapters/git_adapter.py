@@ -127,7 +127,9 @@ class GitAdapter(GitInterface):
                     id=r.id,
                     name=r.name,
                     url=r.web_url,
-                    default_branch=r.default_branch if hasattr(r, "default_branch") else "main"
+                    default_branch=r.default_branch
+                    if hasattr(r, "default_branch")
+                    else "main",
                 )
                 for r in repos
             ]
@@ -145,7 +147,9 @@ class GitAdapter(GitInterface):
                         id=r.id,
                         name=r.name,
                         url=r.web_url,
-                        default_branch=r.default_branch if hasattr(r, "default_branch") else "main"
+                        default_branch=r.default_branch
+                        if hasattr(r, "default_branch")
+                        else "main",
                     )
             return None
         except Exception as e:
@@ -166,8 +170,12 @@ class GitAdapter(GitInterface):
                     id=p.pull_request_id,
                     title=p.title,
                     status=p.status,
-                    source_branch=p.source_ref_name.replace("refs/heads/", "") if hasattr(p, "source_ref_name") and p.source_ref_name else "",
-                    target_branch=p.target_ref_name.replace("refs/heads/", "") if hasattr(p, "target_ref_name") and p.target_ref_name else ""
+                    source_branch=p.source_ref_name.replace("refs/heads/", "")
+                    if hasattr(p, "source_ref_name") and p.source_ref_name
+                    else "",
+                    target_branch=p.target_ref_name.replace("refs/heads/", "")
+                    if hasattr(p, "target_ref_name") and p.target_ref_name
+                    else "",
                 )
                 for p in prs
             ]
