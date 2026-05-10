@@ -6,7 +6,7 @@ resources:
         - task_key: model
           spark_python_task:
             python_file: /Users/fabio.jdluz@gmail.com/models/casboost.py
-          existing_cluster_id: 0427-013851-spq7fwde
+          existing_cluster_id: 0510-121345-y9p8zwrm
           # Adicione esta seção de bibliotecas abaixo:
           libraries:
             - pypi:

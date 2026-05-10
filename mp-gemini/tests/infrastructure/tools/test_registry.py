@@ -1,5 +1,5 @@
-from src.application.services.agent_service import AgentService
-from src.infrastructure.llm_gateways.ollama_gateway import OllamaGateway
+from src.domain.services.agent_service import AgentService
+from src.infrastructure.services.ollama_gateway import OllamaGateway
 
 
 def test_agent_decision_flow_with_ollama():

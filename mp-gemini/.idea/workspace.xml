@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="ALL" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="094919ca-df01-4542-aa29-fd0688ce1f1a" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reproduce_issue.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../databricks_ops.py" beforeDir="false" afterPath="$PROJECT_DIR$/../databricks_ops.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../drift.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../mcp_server.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/mp-gemini.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/mp-gemini.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/application/use_cases/git_automation.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/application/use_cases/git_automation.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/application/use_cases/job_automation.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/application/use_cases/job_automation.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/domain/repositories/git_repository.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/domain/repositories/git_repository.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/domain/repositories/job_repository.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/domain/repositories/job_repository.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/domain/services/agent_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/domain/services/agent_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/infrastructure/adapters/git_adapter.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/infrastructure/adapters/git_adapter.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/infrastructure/adapters/job_adapter.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/infrastructure/adapters/job_adapter.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/interfaces/tools/agent_tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/interfaces/tools/agent_tools.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/domain/test_listar_jobs.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/domain/test_listar_jobs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/infrastructure/tools/test_registry.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/infrastructure/tools/test_registry.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="EmbeddingIndexingInfo">
+    <option name="cachedIndexableFilesCount" value="12472" />
+    <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "",
+  "associatedIndex": 8
+}]]></component>
+  <component name="ProjectId" id="3DXAnSuRD5pvcigJNd3Oo2jqF39" />
+  <component name="ProjectViewState">
+    <option name="autoscrollFromSource" value="true" />
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.streamlit run app.executor": "Run",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "Shell Script.Unnamed.executor": "Debug",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "main",
+    "junie.onboarding.icon.badge.shown": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RunManager" selected="Shell Script.Unnamed">
+    <configuration name="streamlit run app" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="mp-gemini" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="SDK_NAME" value="Python 3.13 (mp-gemini)" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="DEBUG_JUST_MY_CODE" value="false" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="streamlit run app.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Unnamed" type="ShConfigurationType" nameIsGenerated="true">
+      <option name="SCRIPT_TEXT" value="Streamlit run app.py" />
+      <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
+      <option name="SCRIPT_PATH" value="$PROJECT_DIR$/app.py" />
+      <option name="SCRIPT_OPTIONS" value="" />
+      <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
+      <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
+      <option name="INTERPRETER_PATH" value="/bin/zsh" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="EXECUTE_IN_TERMINAL" value="true" />
+      <option name="EXECUTE_SCRIPT_FILE" value="false" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Python.streamlit run app" />
+      <item itemvalue="Shell Script.Unnamed" />
+    </list>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-024ed6589d45-c2ffad84badb-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-261.23567.174" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="094919ca-df01-4542-aa29-fd0688ce1f1a" name="Changes" comment="" />
+      <created>1778418208754</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1778418208754</updated>
+      <workItem from="1778418211041" duration="2736000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/mp_gemini$streamlit_run_app.coverage" NAME="streamlit run app Coverage Results" MODIFIED="1778418476870" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
+  </component>
+</project>

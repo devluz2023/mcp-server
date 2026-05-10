@@ -84,7 +84,7 @@ def criar_job(nome: str):
 
         if not cluster_id:
             return "Erro: DATABRICKS_CLUSTER_ID não configurado."
-
+  
         job = w.jobs.create(
             name=nome,
             tasks=[

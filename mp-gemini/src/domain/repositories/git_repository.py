@@ -20,6 +20,11 @@ class GitRepository(ABC):
         pass
 
     @abstractmethod
+    def commitar_arquivos(self, repo_id: str, branch_name: str) -> bool:
+        """Cria uma branch usando o ID do repositório."""
+        pass
+
+    @abstractmethod
     def approve_pr(self, repo_id: str, pr_id: int) -> bool:
         """Aprova uma Pull Request específica."""
         pass
@@ -32,4 +37,14 @@ class GitRepository(ABC):
     @abstractmethod
     def list_active_prs(self, repo_id: str) -> List[PullRequest]:
         """Retorna a lista de PRs abertas no repositório."""
+        pass
+
+    @abstractmethod
+    def list_repositories(self) -> List[GitRepository]:
+        """Lista todos os repositórios do projeto."""
+        pass
+
+    @abstractmethod
+    def criar_repositorio(self, repo_name: str) -> bool:
+        """Cria um novo repositório."""
         pass

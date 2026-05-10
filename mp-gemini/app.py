@@ -31,7 +31,7 @@ if "agent" not in st.session_state:
 
         # B. Inicializa Use Cases
         git_use_Case = GitAutomationUseCase(git_repository=azure_adapter)
-        job_use_case = JobAutomationUseCase(job_repository=db_adapter)
+        job_use_case = JobAutomationUseCase(repo=db_adapter)
 
         # C. Registra as Tools injetando os Use Cases nelas
         # Isso permite que a Tool dentro do AgentService tenha "poder" de execução

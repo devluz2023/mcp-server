@@ -43,3 +43,9 @@ class GitAutomationUseCase:
             return []
 
         return self.git_repository.list_active_prs(repo.id)
+
+    def list_repositories(self) -> List[GitEnt]:
+        return self.git_repository.list_repositories()
+
+    def criar_repositorio(self, repo_name: str) -> bool:
+        return self.git_repository.criar_repositorio(repo_name)

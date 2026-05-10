@@ -1,6 +1,6 @@
 from langchain_core.messages import HumanMessage
 from src.domain.repositories.llm_provider import LLMProviderPort
-from src.interfaces.tools.agent_tools import initialize_tools as tools
+from src.interfaces.tools.agent_tools import get_tools
 
 
 class AgentService:
@@ -8,6 +8,8 @@ class AgentService:
         self.llm_provider = llm_provider
 
     def process_message(self, prompt: str):
+        tools = get_tools()
+
         # O serviço não sabe se é OpenAI ou outro, apenas que segue o contrato
         response = self.llm_provider.invoke([HumanMessage(content=prompt)], tools)
 

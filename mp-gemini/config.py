@@ -23,6 +23,7 @@ class Config:
     PERSONAL_ACCESS_TOKEN: str = os.getenv("PERSONAL_ACCESS_TOKEN", "")
     ORGANIZATION_URL: str = os.getenv("ORGANIZATION_URL", "")
     PROJECT_NAME: str = os.getenv("PROJECT_NAME", "")
+    AZURE_PROJECT_NAME: str = os.getenv("AZURE_PROJECT_NAME", PROJECT_NAME)
     REPOSITORY_NAME: str = os.getenv("REPOSITORY_NAME", "")
     BRANCH_NAME: str = os.getenv("BRANCH_NAME", "main")
 
